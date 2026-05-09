@@ -1,8 +1,12 @@
+.DS_Store
+
 # Rust
 target/
 
 # SQLite
 *.db
+*.db-shm
+*.db-wal
 
 # Dioxus
 apps/frontend/dist/

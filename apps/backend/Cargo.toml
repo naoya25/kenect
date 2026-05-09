@@ -9,3 +9,5 @@ axum = { workspace = true }
 serde = { workspace = true }
 sqlx = { workspace = true }
 shared = { path = "../../packages/shared" }
+tower-http = { version = "0.6.10", features = ["cors"] }
+dotenvy = "0.15.7"
