@@ -1,0 +1,12 @@
+# Rust
+target/
+
+# SQLite
+*.db
+
+# Dioxus
+apps/frontend/dist/
+apps/frontend/.dioxus/
+
+# 環境変数
+.env

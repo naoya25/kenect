@@ -1,0 +1,14 @@
+[workspace]
+members = [
+    "apps/frontend",
+    "apps/backend",
+    "packages/shared",
+]
+resolver = "2"
+
+[workspace.dependencies]
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1", features = ["derive"] }
+axum = "0.8"
+dioxus = { version = "0.7", features = ["web"] }
+sqlx = { version = "0.8", features = ["sqlite", "runtime-tokio"] }
