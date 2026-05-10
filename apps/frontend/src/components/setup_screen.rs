@@ -10,7 +10,7 @@ pub fn SetupScreen(on_start: EventHandler<(usize, GameMode)>) -> Element {
     rsx! {
         div { class: "page setup-wrapper",
             div { class: "setup-card",
-                h1 { class: "setup-title", "ケネクト" }
+                h1 { class: "setup-title", "Kenect" }
                 p { class: "setup-subtitle", "県や市をつないでいくゲームです" }
 
                 fieldset { class: "setup-fieldset",

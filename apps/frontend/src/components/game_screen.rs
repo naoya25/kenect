@@ -67,6 +67,7 @@ pub fn GameScreen(state: GameState, mode: GameMode, on_update: EventHandler<Game
             // 地図エリア（上）
             div { class: "map-section",
                 MapView { state: state.clone(), mode }
+                div { class: "game-title-badge", "Kenect" }
             }
 
             // コントロールエリア（下）

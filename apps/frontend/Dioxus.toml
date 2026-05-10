@@ -3,7 +3,7 @@ name = "kenect"
 default_platform = "web"
 
 [web.app]
-title = "ケネクト"
+title = "Kenect"
 
 [web.watcher]
 reload_html = true
