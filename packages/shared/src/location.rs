@@ -56,6 +56,24 @@ impl RegionDatabase {
             .unwrap_or(false)
     }
 
+    pub fn valid_move_count(&self, current: LocationId, used: &[LocationId]) -> usize {
+        self.get(current)
+            .map(|e| e.neighbors.iter().filter(|n| !used.contains(n)).count())
+            .unwrap_or(0)
+    }
+
+    pub fn valid_move_ids(&self, current: LocationId, used: &[LocationId]) -> Vec<LocationId> {
+        self.get(current)
+            .map(|e| {
+                e.neighbors
+                    .iter()
+                    .copied()
+                    .filter(|n| !used.contains(n))
+                    .collect()
+            })
+            .unwrap_or_default()
+    }
+
     pub fn name_of(&self, id: LocationId) -> Option<&str> {
         self.get(id).map(|e| e.name)
     }

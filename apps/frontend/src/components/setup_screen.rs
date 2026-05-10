@@ -23,6 +23,15 @@ pub fn SetupScreen(on_start: EventHandler<(usize, GameMode)>) -> Element {
                     }
                     "県モード"
                 }
+                label {
+                    input {
+                        r#type: "radio",
+                        name: "mode",
+                        checked: mode() == GameMode::City,
+                        oninput: move |_| mode.set(GameMode::City),
+                    }
+                    "市モード（サンプル）"
+                }
             }
 
             label { "プレイヤー数：" }

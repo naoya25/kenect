@@ -1,5 +1,5 @@
 use dioxus::prelude::*;
-use shared::data::PREFECTURE_DB;
+use shared::data::{CITY_DB, PREFECTURE_DB};
 use shared::game::{GamePhase, GameState};
 use shared::location::RegionDatabase;
 
@@ -9,11 +9,13 @@ use crate::utils::random_start;
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum GameMode {
     Prefecture,
+    City,
 }
 
 pub fn db(mode: GameMode) -> &'static RegionDatabase {
     match mode {
         GameMode::Prefecture => &PREFECTURE_DB,
+        GameMode::City => &CITY_DB,
     }
 }
 

@@ -2,6 +2,7 @@ use dioxus::prelude::*;
 use shared::game::{DeclareError, GameState};
 
 use crate::app::{GameMode, db};
+use crate::components::MapView;
 use crate::utils::used_names;
 
 #[component]
@@ -12,6 +13,7 @@ pub fn GameScreen(state: GameState, mode: GameMode, on_update: EventHandler<Game
     let current_name = db(mode).name_of(state.current).unwrap_or("");
     let current_hint = db(mode).hint_of(state.current).unwrap_or_default();
     let current_player = state.current_player_index + 1;
+    let move_count = db(mode).valid_move_count(state.current, &state.used);
 
     let state_snap = state.clone();
     let declare = use_callback(move |_| {
@@ -37,9 +39,11 @@ pub fn GameScreen(state: GameState, mode: GameMode, on_update: EventHandler<Game
     rsx! {
         div {
             h1 { "ケネクト" }
+            MapView { state: state.clone(), mode }
             p { "現在地：{current_name} {current_hint}" }
             p { "プレイヤー{current_player}の番" }
             p { "残りプレイヤー：{state.active_count()}人" }
+            p { "宣言可能：{move_count}択" }
 
             input {
                 r#type: "text",
