@@ -616,3 +616,113 @@ body::after {
   background: rgba(0, 245, 255, 0.15);
   box-shadow: var(--glow-cyan);
 }
+
+/* ═══════════════════════════════════
+   RESPONSIVE
+   ═══════════════════════════════════ */
+
+/* モバイルブラウザのアドレスバー考慮 */
+@supports (height: 100dvh) {
+  body        { min-height: 100dvh; }
+  .game-screen { height: 100dvh; }
+}
+
+@media (max-width: 640px) {
+  /* ── ゲームパネル ── */
+  .glass-panel {
+    padding: 10px 12px 8px;
+  }
+
+  /* 3列→ 2行: [現在地 | 統計] / [入力] */
+  .panel-grid {
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto;
+    gap: 8px 10px;
+  }
+
+  .panel-location {
+    grid-column: 1;
+    grid-row: 1;
+    border-right: none;
+    padding-right: 0;
+  }
+
+  /* ヒントは省略してコンパクトに */
+  .panel-location .gc-hint { display: none; }
+
+  .gc-name { font-size: 1rem; }
+
+  .panel-stats {
+    grid-column: 2;
+    grid-row: 1;
+    flex-direction: column;
+    gap: 4px;
+    justify-content: flex-start;
+  }
+
+  .stat-chip {
+    padding: 4px 8px;
+    min-width: 48px;
+  }
+
+  .gc-stat-val { font-size: 0.85rem; }
+
+  .panel-input {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    border-left: none;
+    padding-left: 0;
+    border-top: 1px solid rgba(0, 245, 255, 0.12);
+    padding-top: 8px;
+  }
+
+  .panel-used-strip {
+    margin-top: 6px;
+    padding-top: 6px;
+  }
+
+  /* iOS は font-size < 16px のinputをタップすると自動ズームする */
+  .glass-input,
+  .setup-number-input,
+  .setup-name-input {
+    font-size: 16px;
+  }
+
+  /* ゲームタイトルバッジを小さく */
+  .game-title-badge {
+    font-size: 0.82rem;
+    top: 10px;
+    left: 12px;
+  }
+
+  /* ── セットアップ画面 ── */
+  .setup-wrapper {
+    align-items: flex-start;
+    padding: 20px 0;
+  }
+
+  .setup-card {
+    padding: 28px 20px;
+    margin: 0 16px;
+    max-width: calc(100% - 32px);
+  }
+
+  .setup-title { font-size: 1.7rem; }
+
+  .setup-radio-group {
+    flex-direction: column;
+  }
+
+  /* ── 結果画面 ── */
+  .result-card {
+    padding: 28px 20px;
+    margin: 0 16px;
+    max-width: calc(100% - 32px);
+  }
+
+  /* ドロップダウンをタップしやすく */
+  .cyber-dropdown-item {
+    padding: 12px 12px;
+    font-size: 1rem;
+  }
+}

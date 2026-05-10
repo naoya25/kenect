@@ -64,6 +64,7 @@ pub fn App() -> Element {
     };
 
     rsx! {
+        document::Meta { name: "viewport", content: "width=device-width, initial-scale=1" }
         document::Style { "{CSS}" }
         {inner}
     }
