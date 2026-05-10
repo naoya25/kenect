@@ -4,6 +4,7 @@ default_platform = "web"
 
 [web.app]
 title = "Kenect"
+base_path = "kenect"
 
 [web.watcher]
 reload_html = true
