@@ -1,4 +1,5 @@
 use dioxus::prelude::*;
+use shared::data::PREFECTURE_DB;
 use shared::game::{GamePhase, GameState};
 
 use crate::components::{GameScreen, ResultScreen, SetupScreen};
@@ -18,8 +19,8 @@ pub fn App() -> Element {
     match screen() {
         Screen::Setup => rsx! {
             SetupScreen { on_start: move |player_count| {
-                let start = random_start();
-                screen.set(Screen::Game(GameState::new(start, player_count)));
+                let start = random_start(&PREFECTURE_DB);
+                screen.set(Screen::Game(GameState::new(start, player_count, &PREFECTURE_DB)));
             }}
         },
         Screen::Game(state) => rsx! {

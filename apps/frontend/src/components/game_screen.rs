@@ -1,19 +1,17 @@
 use dioxus::prelude::*;
+use shared::data::PREFECTURE_DB;
 use shared::game::{DeclareError, GameState};
-use shared::prefecture::get_prefecture;
+use shared::location::LocationDatabase;
 
-use crate::utils::{find_prefecture_by_name, used_names};
+use crate::utils::used_names;
 
 #[component]
 pub fn GameScreen(state: GameState, on_update: EventHandler<GameState>) -> Element {
     let mut input = use_signal(String::new);
     let mut error_msg = use_signal(String::new);
 
-    let current_pref = get_prefecture(state.current);
-    let current_name = current_pref.map(|p| p.name).unwrap_or("");
-    let current_hint = current_pref
-        .map(|p| format!("{} / {}", p.kana, p.roman))
-        .unwrap_or_default();
+    let current_name = PREFECTURE_DB.name_of(state.current).unwrap_or("");
+    let current_hint = PREFECTURE_DB.hint_of(state.current).unwrap_or_default();
     let current_player = state.current_player_index + 1;
 
     rsx! {
@@ -34,9 +32,8 @@ pub fn GameScreen(state: GameState, on_update: EventHandler<GameState>) -> Eleme
                 onclick: move |_| {
                     let name = input();
                     let mut new_state = state.clone();
-
-                    let candidates = find_prefecture_by_name(&name);
-                    match new_state.declare(&candidates) {
+                    let candidates = PREFECTURE_DB.find_by_name(&name);
+                    match new_state.declare(&candidates, &PREFECTURE_DB) {
                         Ok(()) => {
                             error_msg.set(String::new());
                         }
@@ -48,7 +45,6 @@ pub fn GameScreen(state: GameState, on_update: EventHandler<GameState>) -> Eleme
                         }
                         Err(DeclareError::GameAlreadyOver) => {}
                     }
-
                     input.set(String::new());
                     on_update.call(new_state);
                 },
@@ -60,7 +56,7 @@ pub fn GameScreen(state: GameState, on_update: EventHandler<GameState>) -> Eleme
             }
 
             h3 { "使用済み" }
-            p { "{used_names(&state)}" }
+            p { "{used_names(&state, &PREFECTURE_DB)}" }
         }
     }
 }
