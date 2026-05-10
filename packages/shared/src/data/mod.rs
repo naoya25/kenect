@@ -4,4 +4,4 @@ pub mod prefecture;
 use crate::location::RegionDatabase;
 
 pub static PREFECTURE_DB: RegionDatabase = RegionDatabase::new(prefecture::PREFECTURES);
-pub static CITY_DB: RegionDatabase = RegionDatabase::new(city::CITIES);
+pub use city::TOKYO_DB;

@@ -49,7 +49,13 @@ impl GameState {
             current_player_index: 0,
             phase: GamePhase::Playing,
         };
-        state.eliminate_stuck_players(db);
+        if db
+            .all_regions()
+            .iter()
+            .any(|region| !region.neighbors.is_empty())
+        {
+            state.eliminate_stuck_players(db);
+        }
         state
     }
 

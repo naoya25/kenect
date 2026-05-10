@@ -1,5 +1,5 @@
 use dioxus::prelude::*;
-use shared::data::{CITY_DB, PREFECTURE_DB};
+use shared::data::{PREFECTURE_DB, TOKYO_DB};
 use shared::game::{GamePhase, GameState};
 use shared::location::RegionDatabase;
 
@@ -15,7 +15,7 @@ pub enum GameMode {
 pub fn db(mode: GameMode) -> &'static RegionDatabase {
     match mode {
         GameMode::Prefecture => &PREFECTURE_DB,
-        GameMode::City => &CITY_DB,
+        GameMode::City => &TOKYO_DB,
     }
 }
 
