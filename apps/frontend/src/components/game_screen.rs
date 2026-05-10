@@ -1,16 +1,16 @@
 use dioxus::prelude::*;
-use shared::data::PREFECTURE_DB;
 use shared::game::{DeclareError, GameState};
 
+use crate::app::{GameMode, db};
 use crate::utils::used_names;
 
 #[component]
-pub fn GameScreen(state: GameState, on_update: EventHandler<GameState>) -> Element {
+pub fn GameScreen(state: GameState, mode: GameMode, on_update: EventHandler<GameState>) -> Element {
     let mut input = use_signal(String::new);
     let mut error_msg = use_signal(String::new);
 
-    let current_name = PREFECTURE_DB.name_of(state.current).unwrap_or("");
-    let current_hint = PREFECTURE_DB.hint_of(state.current).unwrap_or_default();
+    let current_name = db(mode).name_of(state.current).unwrap_or("");
+    let current_hint = db(mode).hint_of(state.current).unwrap_or_default();
     let current_player = state.current_player_index + 1;
 
     rsx! {
@@ -22,7 +22,7 @@ pub fn GameScreen(state: GameState, on_update: EventHandler<GameState>) -> Eleme
 
             input {
                 r#type: "text",
-                placeholder: "県名を入力（例：神奈川）",
+                placeholder: "名前を入力",
                 value: "{input}",
                 oninput: move |e| input.set(e.value()),
             }
@@ -31,8 +31,8 @@ pub fn GameScreen(state: GameState, on_update: EventHandler<GameState>) -> Eleme
                 onclick: move |_| {
                     let name = input();
                     let mut new_state = state.clone();
-                    let candidates = PREFECTURE_DB.find_by_name(&name);
-                    match new_state.declare(&candidates, &PREFECTURE_DB) {
+                    let candidates = db(mode).find_by_name(&name);
+                    match new_state.declare(&candidates, db(mode)) {
                         Ok(()) => {
                             error_msg.set(String::new());
                         }
@@ -55,7 +55,7 @@ pub fn GameScreen(state: GameState, on_update: EventHandler<GameState>) -> Eleme
             }
 
             h3 { "使用済み" }
-            p { "{used_names(&state, &PREFECTURE_DB)}" }
+            p { "{used_names(&state, db(mode))}" }
         }
     }
 }

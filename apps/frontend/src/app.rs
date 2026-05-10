@@ -1,15 +1,27 @@
 use dioxus::prelude::*;
 use shared::data::PREFECTURE_DB;
 use shared::game::{GamePhase, GameState};
+use shared::location::RegionDatabase;
 
 use crate::components::{GameScreen, ResultScreen, SetupScreen};
 use crate::utils::random_start;
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum GameMode {
+    Prefecture,
+}
+
+pub fn db(mode: GameMode) -> &'static RegionDatabase {
+    match mode {
+        GameMode::Prefecture => &PREFECTURE_DB,
+    }
+}
+
 #[derive(Clone)]
 pub enum Screen {
     Setup,
-    Game(GameState),
-    Result(GameState),
+    Game(GameState, GameMode),
+    Result(GameState, GameMode),
 }
 
 #[component]
@@ -18,26 +30,30 @@ pub fn App() -> Element {
 
     match screen() {
         Screen::Setup => rsx! {
-            SetupScreen { on_start: move |player_count| {
-                let start = random_start(&PREFECTURE_DB);
-                screen.set(Screen::Game(GameState::new(start, player_count, &PREFECTURE_DB)));
-            }}
+            SetupScreen {
+                on_start: move |(player_count, mode)| {
+                    let start = random_start(db(mode));
+                    screen.set(Screen::Game(GameState::new(start, player_count, db(mode)), mode));
+                }
+            }
         },
-        Screen::Game(state) => rsx! {
+        Screen::Game(state, mode) => rsx! {
             GameScreen {
                 state: state.clone(),
+                mode,
                 on_update: move |new_state: GameState| {
                     if new_state.phase == GamePhase::GameOver {
-                        screen.set(Screen::Result(new_state));
+                        screen.set(Screen::Result(new_state, mode));
                     } else {
-                        screen.set(Screen::Game(new_state));
+                        screen.set(Screen::Game(new_state, mode));
                     }
                 }
             }
         },
-        Screen::Result(state) => rsx! {
+        Screen::Result(state, mode) => rsx! {
             ResultScreen {
                 state: state.clone(),
+                mode,
                 on_restart: move |_| screen.set(Screen::Setup),
             }
         },
