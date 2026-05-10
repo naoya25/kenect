@@ -511,6 +511,17 @@ body::after {
   box-shadow: 0 0 10px rgba(0, 245, 255, 0.2);
 }
 
+.setup-names-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.setup-name-input {
+  width: 100%;
+  font-size: 0.84rem;
+}
+
 /* ═══════════════════════════════════
    RESULT
    ═══════════════════════════════════ */

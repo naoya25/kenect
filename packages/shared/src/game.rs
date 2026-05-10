@@ -4,6 +4,7 @@ use crate::location::{LocationId, RegionDatabase};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PlayerState {
+    pub name: String,
     pub score: u32,
     pub active: bool,
 }
@@ -31,18 +32,16 @@ pub enum DeclareError {
 }
 
 impl GameState {
-    pub fn new(start: LocationId, player_count: usize, db: &RegionDatabase) -> Self {
-        assert!(player_count >= 1, "プレイヤーは1人以上必要です");
+    pub fn new(start: LocationId, names: Vec<String>, db: &RegionDatabase) -> Self {
+        assert!(!names.is_empty(), "プレイヤーは1人以上必要です");
+        let players = names
+            .into_iter()
+            .map(|name| PlayerState { name, score: 0, active: true })
+            .collect();
         let mut state = Self {
             current: start,
             used: vec![start],
-            players: vec![
-                PlayerState {
-                    score: 0,
-                    active: true
-                };
-                player_count
-            ],
+            players,
             current_player_index: 0,
             phase: GamePhase::Playing,
         };
@@ -143,7 +142,7 @@ mod tests {
 
     #[test]
     fn new_game_starts_with_first_player() {
-        let game = GameState::new(P::Tokyo.id(), 2, &PREFECTURE_DB);
+        let game = GameState::new(P::Tokyo.id(), vec!["P1".into(), "P2".into()], &PREFECTURE_DB);
         assert_eq!(game.current_player_index, 0);
         assert_eq!(game.phase, GamePhase::Playing);
         assert_eq!(game.active_count(), 2);
@@ -151,7 +150,7 @@ mod tests {
 
     #[test]
     fn valid_declare_advances_player_and_score() {
-        let mut game = GameState::new(P::Tokyo.id(), 2, &PREFECTURE_DB);
+        let mut game = GameState::new(P::Tokyo.id(), vec!["P1".into(), "P2".into()], &PREFECTURE_DB);
         game.declare(&[P::Kanagawa.id()], &PREFECTURE_DB).unwrap();
         assert_eq!(game.current_player_index, 1);
         assert_eq!(game.players[0].score, 1);
@@ -160,7 +159,7 @@ mod tests {
 
     #[test]
     fn not_adjacent_eliminates_player() {
-        let mut game = GameState::new(P::Tokyo.id(), 2, &PREFECTURE_DB);
+        let mut game = GameState::new(P::Tokyo.id(), vec!["P1".into(), "P2".into()], &PREFECTURE_DB);
         let err = game.declare(&[P::Osaka.id()], &PREFECTURE_DB).unwrap_err();
         assert_eq!(err, DeclareError::NotAdjacent);
         assert!(!game.players[0].active);
@@ -169,7 +168,7 @@ mod tests {
 
     #[test]
     fn used_candidate_eliminates_player() {
-        let mut game = GameState::new(P::Tokyo.id(), 2, &PREFECTURE_DB);
+        let mut game = GameState::new(P::Tokyo.id(), vec!["P1".into(), "P2".into()], &PREFECTURE_DB);
         game.declare(&[P::Kanagawa.id()], &PREFECTURE_DB).unwrap();
         let err = game.declare(&[P::Tokyo.id()], &PREFECTURE_DB).unwrap_err();
         assert_eq!(err, DeclareError::NotAdjacent);
@@ -178,7 +177,7 @@ mod tests {
 
     #[test]
     fn not_found_does_not_eliminate_player() {
-        let mut game = GameState::new(P::Tokyo.id(), 2, &PREFECTURE_DB);
+        let mut game = GameState::new(P::Tokyo.id(), vec!["P1".into(), "P2".into()], &PREFECTURE_DB);
         let err = game.declare(&[], &PREFECTURE_DB).unwrap_err();
         assert_eq!(err, DeclareError::NotFound);
         assert!(game.players[0].active);
@@ -186,7 +185,7 @@ mod tests {
 
     #[test]
     fn first_valid_candidate_is_used() {
-        let mut game = GameState::new(P::Tokyo.id(), 2, &PREFECTURE_DB);
+        let mut game = GameState::new(P::Tokyo.id(), vec!["P1".into(), "P2".into()], &PREFECTURE_DB);
         game.declare(&[P::Tokyo.id(), P::Kanagawa.id()], &PREFECTURE_DB)
             .unwrap();
         assert_eq!(game.current, P::Kanagawa.id());
@@ -194,14 +193,14 @@ mod tests {
 
     #[test]
     fn current_stays_on_invalid_declare() {
-        let mut game = GameState::new(P::Tokyo.id(), 2, &PREFECTURE_DB);
+        let mut game = GameState::new(P::Tokyo.id(), vec!["P1".into(), "P2".into()], &PREFECTURE_DB);
         game.declare(&[P::Osaka.id()], &PREFECTURE_DB).unwrap_err();
         assert_eq!(game.current, P::Tokyo.id());
     }
 
     #[test]
     fn all_eliminated_causes_game_over() {
-        let mut game = GameState::new(P::Tokyo.id(), 2, &PREFECTURE_DB);
+        let mut game = GameState::new(P::Tokyo.id(), vec!["P1".into(), "P2".into()], &PREFECTURE_DB);
         game.declare(&[P::Osaka.id()], &PREFECTURE_DB).unwrap_err(); // P1脱落
         game.declare(&[P::Osaka.id()], &PREFECTURE_DB).unwrap_err(); // P2脱落
         assert_eq!(game.phase, GamePhase::GameOver);
@@ -209,7 +208,7 @@ mod tests {
 
     #[test]
     fn single_player_game() {
-        let mut game = GameState::new(P::Tokyo.id(), 1, &PREFECTURE_DB);
+        let mut game = GameState::new(P::Tokyo.id(), vec!["P1".into()], &PREFECTURE_DB);
         game.declare(&[P::Kanagawa.id()], &PREFECTURE_DB).unwrap();
         assert_eq!(game.players[0].score, 1);
         assert_eq!(game.current_player_index, 0);
@@ -217,7 +216,7 @@ mod tests {
 
     #[test]
     fn ranking_by_score() {
-        let mut game = GameState::new(P::Tokyo.id(), 2, &PREFECTURE_DB);
+        let mut game = GameState::new(P::Tokyo.id(), vec!["P1".into(), "P2".into()], &PREFECTURE_DB);
         game.declare(&[P::Kanagawa.id()], &PREFECTURE_DB).unwrap(); // P1: 1点
         game.declare(&[P::Osaka.id()], &PREFECTURE_DB).unwrap_err(); // P2脱落: 0点
         let ranking = game.ranking();

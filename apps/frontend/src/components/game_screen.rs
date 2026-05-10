@@ -17,7 +17,7 @@ pub fn GameScreen(state: GameState, mode: GameMode, on_update: EventHandler<Game
 
     let current_name = db(mode).name_of(state.current).unwrap_or("");
     let current_hint = db(mode).hint_of(state.current).unwrap_or_default();
-    let current_player = state.current_player_index + 1;
+    let current_player_name = state.players[state.current_player_index].name.clone();
     let active_count = state.active_count();
     let move_count = db(mode).valid_move_count(state.current, &state.used);
 
@@ -85,7 +85,7 @@ pub fn GameScreen(state: GameState, mode: GameMode, on_update: EventHandler<Game
                     div { class: "panel-stats",
                         div { class: "stat-chip",
                             div { class: "gc-label", "プレイヤー" }
-                            div { class: "gc-stat-val", "{current_player}" }
+                            div { class: "gc-stat-val", "{current_player_name}" }
                         }
                         div { class: "stat-chip",
                             div { class: "gc-label", "残り" }

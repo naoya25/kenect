@@ -35,9 +35,9 @@ pub fn App() -> Element {
     let inner = match screen() {
         Screen::Setup => rsx! {
             SetupScreen {
-                on_start: move |(player_count, mode)| {
+                on_start: move |(names, mode)| {
                     let start = random_start(db(mode));
-                    screen.set(Screen::Game(GameState::new(start, player_count, db(mode)), mode));
+                    screen.set(Screen::Game(GameState::new(start, names, db(mode)), mode));
                 }
             }
         },

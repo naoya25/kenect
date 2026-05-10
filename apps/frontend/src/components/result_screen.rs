@@ -24,7 +24,7 @@ pub fn ResultScreen(state: GameState, mode: GameMode, on_restart: EventHandler<(
                                 "{medals.get(rank).copied().unwrap_or(\"　\")}"
                             }
                             span { class: "ranking-player",
-                                "プレイヤー {player_index + 1}"
+                                "{state.players[player_index].name}"
                             }
                             span { class: "ranking-score",
                                 "{state.players[player_index].score} {score_unit}"
