@@ -6,8 +6,8 @@ use crate::utils::{find_prefecture_by_name, used_names};
 
 #[component]
 pub fn GameScreen(state: GameState, on_update: EventHandler<GameState>) -> Element {
-    let mut input = use_signal(|| String::new());
-    let mut error_msg = use_signal(|| String::new());
+    let mut input = use_signal(String::new);
+    let mut error_msg = use_signal(String::new);
 
     let current_name = get_prefecture(state.current).map(|p| p.name).unwrap_or("");
     let current_player = state.current_player_index + 1;

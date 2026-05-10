@@ -16,9 +16,8 @@ pub fn SetupScreen(on_start: EventHandler<usize>) -> Element {
                 max: "10",
                 value: "{player_count}",
                 oninput: move |e| {
-                    if let Ok(n) = e.value().parse::<usize>() {
-                        if n >= 1 { player_count.set(n); }
-                    }
+                    if let Ok(n) = e.value().parse::<usize>()
+                        && n >= 1 { player_count.set(n); }
                 }
             }
 
