@@ -67,4 +67,8 @@ impl RegionDatabase {
     pub fn all_ids(&self) -> Vec<LocationId> {
         self.entries.iter().map(|e| e.id).collect()
     }
+
+    pub fn all_regions(&self) -> &[Region] {
+        self.entries
+    }
 }

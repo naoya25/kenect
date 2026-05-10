@@ -13,6 +13,27 @@ pub fn GameScreen(state: GameState, mode: GameMode, on_update: EventHandler<Game
     let current_hint = db(mode).hint_of(state.current).unwrap_or_default();
     let current_player = state.current_player_index + 1;
 
+    let state_snap = state.clone();
+    let declare = use_callback(move |_| {
+        let name = input();
+        let mut new_state = state_snap.clone();
+        let candidates = db(mode).find_by_name(&name);
+        match new_state.declare(&candidates, db(mode)) {
+            Ok(()) => {
+                error_msg.set(String::new());
+            }
+            Err(DeclareError::NotFound) => {
+                error_msg.set(format!("「{}」は見つかりません", name));
+            }
+            Err(DeclareError::NotAdjacent) => {
+                error_msg.set(format!("{}は隣接していません", name));
+            }
+            Err(DeclareError::GameAlreadyOver) => {}
+        }
+        input.set(String::new());
+        on_update.call(new_state);
+    });
+
     rsx! {
         div {
             h1 { "ケネクト" }
@@ -22,31 +43,25 @@ pub fn GameScreen(state: GameState, mode: GameMode, on_update: EventHandler<Game
 
             input {
                 r#type: "text",
+                list: "region-candidates",
                 placeholder: "名前を入力",
                 value: "{input}",
                 oninput: move |e| input.set(e.value()),
+                onkeydown: move |e| {
+                    if e.key() == Key::Enter {
+                        declare(());
+                    }
+                },
+            }
+            datalist {
+                id: "region-candidates",
+                for region in db(mode).all_regions() {
+                    option { value: "{region.name}" }
+                }
             }
 
             button {
-                onclick: move |_| {
-                    let name = input();
-                    let mut new_state = state.clone();
-                    let candidates = db(mode).find_by_name(&name);
-                    match new_state.declare(&candidates, db(mode)) {
-                        Ok(()) => {
-                            error_msg.set(String::new());
-                        }
-                        Err(DeclareError::NotFound) => {
-                            error_msg.set(format!("「{}」は見つかりません", name));
-                        }
-                        Err(DeclareError::NotAdjacent) => {
-                            error_msg.set(format!("{}は隣接していません", name));
-                        }
-                        Err(DeclareError::GameAlreadyOver) => {}
-                    }
-                    input.set(String::new());
-                    on_update.call(new_state);
-                },
+                onclick: move |_| declare(()),
                 "宣言する"
             }
 
