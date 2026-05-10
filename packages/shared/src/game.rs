@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::location::{LocationDatabase, LocationId};
+use crate::location::{LocationId, RegionDatabase};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PlayerState {
@@ -31,7 +31,7 @@ pub enum DeclareError {
 }
 
 impl GameState {
-    pub fn new(start: LocationId, player_count: usize, db: &dyn LocationDatabase) -> Self {
+    pub fn new(start: LocationId, player_count: usize, db: &RegionDatabase) -> Self {
         assert!(player_count >= 1, "プレイヤーは1人以上必要です");
         let mut state = Self {
             current: start,
@@ -67,7 +67,7 @@ impl GameState {
     pub fn declare(
         &mut self,
         candidates: &[LocationId],
-        db: &dyn LocationDatabase,
+        db: &RegionDatabase,
     ) -> Result<(), DeclareError> {
         if self.phase != GamePhase::Playing {
             return Err(DeclareError::GameAlreadyOver);
@@ -95,7 +95,7 @@ impl GameState {
         }
     }
 
-    fn eliminate_current_and_advance(&mut self, db: &dyn LocationDatabase) {
+    fn eliminate_current_and_advance(&mut self, db: &RegionDatabase) {
         self.players[self.current_player_index].active = false;
         if self.active_count() == 0 {
             self.phase = GamePhase::GameOver;
@@ -115,7 +115,7 @@ impl GameState {
         }
     }
 
-    fn eliminate_stuck_players(&mut self, db: &dyn LocationDatabase) {
+    fn eliminate_stuck_players(&mut self, db: &RegionDatabase) {
         let n = self.players.len();
         let mut checked = 0;
         while checked < n {
@@ -187,7 +187,8 @@ mod tests {
     #[test]
     fn first_valid_candidate_is_used() {
         let mut game = GameState::new(P::Tokyo.id(), 2, &PREFECTURE_DB);
-        game.declare(&[P::Tokyo.id(), P::Kanagawa.id()], &PREFECTURE_DB).unwrap();
+        game.declare(&[P::Tokyo.id(), P::Kanagawa.id()], &PREFECTURE_DB)
+            .unwrap();
         assert_eq!(game.current, P::Kanagawa.id());
     }
 

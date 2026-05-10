@@ -22,15 +22,6 @@ pub struct Region {
     pub neighbors: &'static [LocationId],
 }
 
-pub trait LocationDatabase {
-    fn find_by_name(&self, name: &str) -> Vec<LocationId>;
-    fn is_adjacent(&self, a: LocationId, b: LocationId) -> bool;
-    fn has_valid_move(&self, current: LocationId, used: &[LocationId]) -> bool;
-    fn name_of(&self, id: LocationId) -> Option<&str>;
-    fn hint_of(&self, id: LocationId) -> Option<String>;
-    fn all_ids(&self) -> Vec<LocationId>;
-}
-
 pub struct RegionDatabase {
     entries: &'static [Region],
 }
@@ -43,10 +34,8 @@ impl RegionDatabase {
     fn get(&self, id: LocationId) -> Option<&Region> {
         self.entries.iter().find(|e| e.id == id)
     }
-}
 
-impl LocationDatabase for RegionDatabase {
-    fn find_by_name(&self, name: &str) -> Vec<LocationId> {
+    pub fn find_by_name(&self, name: &str) -> Vec<LocationId> {
         self.entries
             .iter()
             .filter(|e| e.name == name)
@@ -54,28 +43,28 @@ impl LocationDatabase for RegionDatabase {
             .collect()
     }
 
-    fn is_adjacent(&self, a: LocationId, b: LocationId) -> bool {
+    pub fn is_adjacent(&self, a: LocationId, b: LocationId) -> bool {
         match (self.get(a), self.get(b)) {
             (Some(ea), Some(eb)) => ea.neighbors.contains(&b) && eb.neighbors.contains(&a),
             _ => false,
         }
     }
 
-    fn has_valid_move(&self, current: LocationId, used: &[LocationId]) -> bool {
+    pub fn has_valid_move(&self, current: LocationId, used: &[LocationId]) -> bool {
         self.get(current)
             .map(|e| e.neighbors.iter().any(|n| !used.contains(n)))
             .unwrap_or(false)
     }
 
-    fn name_of(&self, id: LocationId) -> Option<&str> {
+    pub fn name_of(&self, id: LocationId) -> Option<&str> {
         self.get(id).map(|e| e.name)
     }
 
-    fn hint_of(&self, id: LocationId) -> Option<String> {
+    pub fn hint_of(&self, id: LocationId) -> Option<String> {
         self.get(id).map(|e| format!("{} / {}", e.kana, e.roman))
     }
 
-    fn all_ids(&self) -> Vec<LocationId> {
+    pub fn all_ids(&self) -> Vec<LocationId> {
         self.entries.iter().map(|e| e.id).collect()
     }
 }

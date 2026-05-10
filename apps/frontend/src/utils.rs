@@ -1,8 +1,8 @@
 use rand::seq::IndexedRandom;
 use shared::game::GameState;
-use shared::location::{LocationDatabase, LocationId};
+use shared::location::{LocationId, RegionDatabase};
 
-pub fn random_start(db: &dyn LocationDatabase) -> LocationId {
+pub fn random_start(db: &RegionDatabase) -> LocationId {
     let candidates: Vec<LocationId> = db
         .all_ids()
         .into_iter()
@@ -15,7 +15,7 @@ pub fn random_start(db: &dyn LocationDatabase) -> LocationId {
         .expect("no valid start location")
 }
 
-pub fn used_names(state: &GameState, db: &dyn LocationDatabase) -> String {
+pub fn used_names(state: &GameState, db: &RegionDatabase) -> String {
     state
         .used
         .iter()

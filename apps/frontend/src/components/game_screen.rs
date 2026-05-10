@@ -1,7 +1,6 @@
 use dioxus::prelude::*;
 use shared::data::PREFECTURE_DB;
 use shared::game::{DeclareError, GameState};
-use shared::location::LocationDatabase;
 
 use crate::utils::used_names;
 
