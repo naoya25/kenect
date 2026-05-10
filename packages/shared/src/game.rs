@@ -25,8 +25,8 @@ pub struct GameState {
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum DeclareError {
+    NotFound,
     NotAdjacent,
-    AlreadyUsed,
     GameAlreadyOver,
 }
 
@@ -66,29 +66,31 @@ impl GameState {
         indices
     }
 
-    pub fn declare(&mut self, id: PrefectureId) -> Result<(), DeclareError> {
+    pub fn declare(&mut self, candidates: &[PrefectureId]) -> Result<(), DeclareError> {
         if self.phase != GamePhase::Playing {
             return Err(DeclareError::GameAlreadyOver);
         }
 
-        if self.used.contains(&id) {
-            self.eliminate_current_and_advance();
-            return Err(DeclareError::AlreadyUsed);
+        if candidates.is_empty() {
+            return Err(DeclareError::NotFound);
         }
 
-        if !is_adjacent(self.current, id) {
+        let valid = candidates
+            .iter()
+            .copied()
+            .find(|&id| is_adjacent(self.current, id) && !self.used.contains(&id));
+
+        if let Some(id) = valid {
+            self.current = id;
+            self.used.push(id);
+            self.players[self.current_player_index].score += 1;
+            self.advance_to_next_active();
+            self.eliminate_stuck_players();
+            Ok(())
+        } else {
             self.eliminate_current_and_advance();
-            return Err(DeclareError::NotAdjacent);
+            Err(DeclareError::NotAdjacent)
         }
-
-        // 有効な宣言
-        self.current = id;
-        self.used.push(id);
-        self.players[self.current_player_index].score += 1;
-        self.advance_to_next_active();
-        self.eliminate_stuck_players();
-
-        Ok(())
     }
 
     fn eliminate_current_and_advance(&mut self) {
@@ -152,7 +154,7 @@ mod tests {
     #[test]
     fn valid_declare_advances_player_and_score() {
         let mut game = GameState::new(PrefectureId::Tokyo, 2);
-        game.declare(PrefectureId::Kanagawa).unwrap();
+        game.declare(&[PrefectureId::Kanagawa]).unwrap();
         assert_eq!(game.current_player_index, 1);
         assert_eq!(game.players[0].score, 1);
         assert_eq!(game.current, PrefectureId::Kanagawa);
@@ -161,41 +163,57 @@ mod tests {
     #[test]
     fn not_adjacent_eliminates_player() {
         let mut game = GameState::new(PrefectureId::Tokyo, 2);
-        let err = game.declare(PrefectureId::Osaka).unwrap_err();
+        let err = game.declare(&[PrefectureId::Osaka]).unwrap_err();
         assert_eq!(err, DeclareError::NotAdjacent);
         assert!(!game.players[0].active);
         assert_eq!(game.active_count(), 1);
     }
 
     #[test]
-    fn already_used_eliminates_player() {
+    fn used_candidate_eliminates_player() {
         let mut game = GameState::new(PrefectureId::Tokyo, 2);
-        game.declare(PrefectureId::Kanagawa).unwrap();
-        let err = game.declare(PrefectureId::Tokyo).unwrap_err();
-        assert_eq!(err, DeclareError::AlreadyUsed);
+        game.declare(&[PrefectureId::Kanagawa]).unwrap();
+        let err = game.declare(&[PrefectureId::Tokyo]).unwrap_err();
+        assert_eq!(err, DeclareError::NotAdjacent);
         assert!(!game.players[1].active);
+    }
+
+    #[test]
+    fn not_found_does_not_eliminate_player() {
+        let mut game = GameState::new(PrefectureId::Tokyo, 2);
+        let err = game.declare(&[]).unwrap_err();
+        assert_eq!(err, DeclareError::NotFound);
+        assert!(game.players[0].active);
+    }
+
+    #[test]
+    fn first_valid_candidate_is_used() {
+        let mut game = GameState::new(PrefectureId::Tokyo, 2);
+        // 神奈川は隣接・未使用なので有効、東京は使用済みで無効
+        game.declare(&[PrefectureId::Tokyo, PrefectureId::Kanagawa])
+            .unwrap();
+        assert_eq!(game.current, PrefectureId::Kanagawa);
     }
 
     #[test]
     fn current_stays_on_invalid_declare() {
         let mut game = GameState::new(PrefectureId::Tokyo, 2);
-        game.declare(PrefectureId::Osaka).unwrap_err();
-        // 現在地は東京のまま
+        game.declare(&[PrefectureId::Osaka]).unwrap_err();
         assert_eq!(game.current, PrefectureId::Tokyo);
     }
 
     #[test]
     fn all_eliminated_causes_game_over() {
         let mut game = GameState::new(PrefectureId::Tokyo, 2);
-        game.declare(PrefectureId::Osaka).unwrap_err(); // P1脱落
-        game.declare(PrefectureId::Osaka).unwrap_err(); // P2脱落
+        game.declare(&[PrefectureId::Osaka]).unwrap_err(); // P1脱落
+        game.declare(&[PrefectureId::Osaka]).unwrap_err(); // P2脱落
         assert_eq!(game.phase, GamePhase::GameOver);
     }
 
     #[test]
     fn single_player_game() {
         let mut game = GameState::new(PrefectureId::Tokyo, 1);
-        game.declare(PrefectureId::Kanagawa).unwrap();
+        game.declare(&[PrefectureId::Kanagawa]).unwrap();
         assert_eq!(game.players[0].score, 1);
         assert_eq!(game.current_player_index, 0);
     }
@@ -203,8 +221,8 @@ mod tests {
     #[test]
     fn ranking_by_score() {
         let mut game = GameState::new(PrefectureId::Tokyo, 2);
-        game.declare(PrefectureId::Kanagawa).unwrap(); // P1: 1点
-        game.declare(PrefectureId::Osaka).unwrap_err(); // P2脱落: 0点
+        game.declare(&[PrefectureId::Kanagawa]).unwrap(); // P1: 1点
+        game.declare(&[PrefectureId::Osaka]).unwrap_err(); // P2脱落: 0点
         let ranking = game.ranking();
         assert_eq!(ranking[0], 0); // P1が1位
         assert_eq!(ranking[1], 1); // P2が2位

@@ -9,11 +9,12 @@ pub fn random_start() -> PrefectureId {
     candidates.choose(&mut rng).unwrap().id
 }
 
-pub fn find_prefecture_by_name(name: &str) -> Option<PrefectureId> {
+pub fn find_prefecture_by_name(name: &str) -> Vec<PrefectureId> {
     all_prefectures()
         .iter()
-        .find(|p| p.name == name)
+        .filter(|p| p.name == name)
         .map(|p| p.id)
+        .collect()
 }
 
 pub fn used_names(state: &GameState) -> String {
