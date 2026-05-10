@@ -14,12 +14,10 @@ pub fn MapView(state: GameState, mode: GameMode) -> Element {
     };
 
     rsx! {
+        style { "{css}" }
         div {
-            style { "{css}" }
-            div {
-                style: "width: 100%; max-width: 560px; margin: 0 auto;",
-                dangerous_inner_html: "{JAPAN_SVG}",
-            }
+            style: "width: 100%; height: 100%; overflow: hidden;",
+            dangerous_inner_html: "{JAPAN_SVG}",
         }
     }
 }
@@ -27,25 +25,34 @@ pub fn MapView(state: GameState, mode: GameMode) -> Element {
 fn prefecture_css(state: &GameState, db: &'static RegionDatabase) -> String {
     let mut css = String::new();
 
-    // 使用済みをグレーに
+    // デフォルト: 暗い地図 + サイアンの県境
+    css.push_str(concat!(
+        ".prefecture {",
+        " fill: rgba(5, 5, 20, 0.85) !important;",
+        " stroke: rgba(0, 245, 255, 0.22) !important;",
+        " stroke-width: 0.6px !important;",
+        "}\n"
+    ));
+
+    // 使用済み: 暗いグレー
     for &id in &state.used {
         css.push_str(&format!(
-            ".prefecture[data-code=\"{}\"] {{ fill: #95A5A6 !important; }}\n",
+            ".prefecture[data-code=\"{}\"] {{ fill: rgba(30, 30, 55, 0.9) !important; stroke: rgba(0, 245, 255, 0.12) !important; }}\n",
             id.0
         ));
     }
 
-    // 宣言可能な隣接県を薄い青に
+    // 宣言可能: サイアングロー
     for id in db.valid_move_ids(state.current, &state.used) {
         css.push_str(&format!(
-            ".prefecture[data-code=\"{}\"] {{ fill: #AED6F1 !important; }}\n",
+            ".prefecture[data-code=\"{}\"] {{ fill: rgba(0, 245, 255, 0.22) !important; stroke: rgba(0, 245, 255, 0.7) !important; stroke-width: 1px !important; }}\n",
             id.0
         ));
     }
 
-    // 現在地を赤に（最後に上書き）
+    // 現在地: マゼンタネオン
     css.push_str(&format!(
-        ".prefecture[data-code=\"{}\"] {{ fill: #E74C3C !important; }}\n",
+        ".prefecture[data-code=\"{}\"] {{ fill: rgba(255, 0, 255, 0.6) !important; stroke: #ff00ff !important; stroke-width: 1.5px !important; filter: drop-shadow(0 0 6px #ff00ff); }}\n",
         state.current.0
     ));
 

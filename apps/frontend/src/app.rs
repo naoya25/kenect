@@ -26,11 +26,13 @@ pub enum Screen {
     Result(GameState, GameMode),
 }
 
+const CSS: &str = include_str!("../assets/style.css");
+
 #[component]
 pub fn App() -> Element {
     let mut screen = use_signal(|| Screen::Setup);
 
-    match screen() {
+    let inner = match screen() {
         Screen::Setup => rsx! {
             SetupScreen {
                 on_start: move |(player_count, mode)| {
@@ -59,5 +61,10 @@ pub fn App() -> Element {
                 on_restart: move |_| screen.set(Screen::Setup),
             }
         },
+    };
+
+    rsx! {
+        document::Style { "{CSS}" }
+        {inner}
     }
 }

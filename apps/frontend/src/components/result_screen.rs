@@ -6,21 +6,38 @@ use crate::app::GameMode;
 #[component]
 pub fn ResultScreen(state: GameState, mode: GameMode, on_restart: EventHandler<()>) -> Element {
     let ranking = state.ranking();
+    let score_unit = match mode {
+        GameMode::Prefecture => "県",
+        GameMode::City => "市",
+    };
+    let medals = ["🥇", "🥈", "🥉"];
 
     rsx! {
-        div {
-            h1 { "ゲーム終了！" }
+        div { class: "page result-wrapper",
+            div { class: "result-card",
+                h1 { class: "result-title", "ゲーム終了！" }
 
-            h2 { "スコアランキング" }
-            for (rank, &player_index) in ranking.iter().enumerate() {
-                p {
-                    "第{rank + 1}位 プレイヤー{player_index + 1} Score: {state.players[player_index].score}"
+                div { class: "ranking-list",
+                    for (rank, &player_index) in ranking.iter().enumerate() {
+                        div { class: "ranking-item",
+                            span { class: "ranking-medal",
+                                "{medals.get(rank).copied().unwrap_or(\"　\")}"
+                            }
+                            span { class: "ranking-player",
+                                "プレイヤー {player_index + 1}"
+                            }
+                            span { class: "ranking-score",
+                                "{state.players[player_index].score} {score_unit}"
+                            }
+                        }
+                    }
                 }
-            }
 
-            button {
-                onclick: move |_| on_restart.call(()),
-                "もう一度遊ぶ"
+                button {
+                    class: "primary-btn",
+                    onclick: move |_| on_restart.call(()),
+                    "もう一度遊ぶ"
+                }
             }
         }
     }
