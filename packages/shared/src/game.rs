@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::prefecture::{PrefectureId, get_neighbors, is_adjacent};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct PlayerState {
     pub score: u32,
     pub active: bool,
@@ -14,7 +14,7 @@ pub enum GamePhase {
     GameOver,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct GameState {
     pub current: PrefectureId,
     pub used: Vec<PrefectureId>,
