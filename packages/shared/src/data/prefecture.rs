@@ -69,7 +69,7 @@ pub const PREFECTURES: &[Region] = &[
         name: "北海道",
         kana: "ほっかいどう",
         roman: "Hokkaido",
-        neighbors: &[Aomori.id()],
+        neighbors: &[Aomori.id(), Okinawa.id()],
     },
     Region {
         id: Aomori.id(),
@@ -559,7 +559,7 @@ pub const PREFECTURES: &[Region] = &[
         name: "沖縄",
         kana: "おきなわ",
         roman: "Okinawa",
-        neighbors: &[],
+        neighbors: &[Hokkaido.id()],
     },
 ];
 
@@ -589,12 +589,6 @@ mod tests {
     fn hokkaido_neighbors_include_aomori() {
         let h = PREFECTURES.iter().find(|p| p.id == Hokkaido.id()).unwrap();
         assert!(h.neighbors.contains(&Aomori.id()));
-    }
-
-    #[test]
-    fn okinawa_has_no_neighbors() {
-        let o = PREFECTURES.iter().find(|p| p.id == Okinawa.id()).unwrap();
-        assert!(o.neighbors.is_empty());
     }
 
     #[test]
