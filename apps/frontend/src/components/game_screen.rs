@@ -7,14 +7,35 @@ use crate::utils::used_names;
 
 #[component]
 pub fn GameScreen(state: GameState, mode: GameMode, on_update: EventHandler<GameState>) -> Element {
+    // query: ユーザーが実際に打った文字（フィルタリングに使う）
+    // input: テキストフィールドの表示値（矢印キーで候補名に書き換わる）
+    let mut query = use_signal(String::new);
     let mut input = use_signal(String::new);
     let mut error_msg = use_signal(String::new);
+    let mut show_dropdown = use_signal(|| false);
+    let mut highlight_index: Signal<Option<usize>> = use_signal(|| None);
 
     let current_name = db(mode).name_of(state.current).unwrap_or("");
     let current_hint = db(mode).hint_of(state.current).unwrap_or_default();
     let current_player = state.current_player_index + 1;
     let active_count = state.active_count();
     let move_count = db(mode).valid_move_count(state.current, &state.used);
+
+    // フィルタリングは query ベース（矢印キー操作で変わらない）
+    let filtered: Vec<&'static str> = {
+        let q = query();
+        if q.is_empty() {
+            vec![]
+        } else {
+            db(mode)
+                .all_regions()
+                .iter()
+                .filter(|r| r.name.contains(q.as_str()) || r.kana.contains(q.as_str()))
+                .map(|r| r.name)
+                .take(8)
+                .collect()
+        }
+    };
 
     let state_snap = state.clone();
     let declare = use_callback(move |_| {
@@ -33,7 +54,10 @@ pub fn GameScreen(state: GameState, mode: GameMode, on_update: EventHandler<Game
             }
             Err(DeclareError::GameAlreadyOver) => {}
         }
+        query.set(String::new());
         input.set(String::new());
+        show_dropdown.set(false);
+        highlight_index.set(None);
         on_update.call(new_state);
     });
 
@@ -75,30 +99,105 @@ pub fn GameScreen(state: GameState, mode: GameMode, on_update: EventHandler<Game
                     // 入力
                     div { class: "panel-input",
                         div { class: "input-row",
-                            input {
-                                class: "glass-input",
-                                r#type: "text",
-                                list: "region-candidates",
-                                placeholder: "名前を入力",
-                                value: "{input}",
-                                oninput: move |e| input.set(e.value()),
-                                onkeydown: move |e| {
-                                    if e.key() == Key::Enter && !e.is_composing() {
-                                        declare(());
+                            div { class: "input-autocomplete",
+                                input {
+                                    class: "glass-input",
+                                    r#type: "text",
+                                    placeholder: "名前を入力",
+                                    value: "{input}",
+                                    autocomplete: "off",
+                                    oninput: move |e| {
+                                        let v = e.value();
+                                        // 両方更新：打った文字がそのままクエリになる
+                                        query.set(v.clone());
+                                        input.set(v.clone());
+                                        highlight_index.set(None);
+                                        show_dropdown.set(!v.is_empty());
+                                    },
+                                    onfocus: move |_| {
+                                        if !query().is_empty() {
+                                            show_dropdown.set(true);
+                                        }
+                                    },
+                                    onblur: move |_| {
+                                        show_dropdown.set(false);
+                                    },
+                                    onkeydown: move |e| {
+                                        if e.is_composing() { return; }
+                                        match e.key() {
+                                            Key::Enter => {
+                                                declare(());
+                                            }
+                                            Key::ArrowDown => {
+                                                let len = filtered.len();
+                                                if len == 0 { return; }
+                                                e.prevent_default();
+                                                let next = match highlight_index() {
+                                                    None => 0,
+                                                    Some(i) => (i + 1).min(len - 1),
+                                                };
+                                                highlight_index.set(Some(next));
+                                                // input の表示だけ候補名に書き換える（query は変えない）
+                                                if let Some(name) = filtered.get(next) {
+                                                    input.set(name.to_string());
+                                                }
+                                            }
+                                            Key::ArrowUp => {
+                                                let len = filtered.len();
+                                                if len == 0 { return; }
+                                                e.prevent_default();
+                                                let next = match highlight_index() {
+                                                    None | Some(0) => 0,
+                                                    Some(i) => i - 1,
+                                                };
+                                                highlight_index.set(Some(next));
+                                                if let Some(name) = filtered.get(next) {
+                                                    input.set(name.to_string());
+                                                }
+                                            }
+                                            Key::Escape => {
+                                                // Escape で選択解除し、元の打った文字に戻す
+                                                show_dropdown.set(false);
+                                                highlight_index.set(None);
+                                                input.set(query());
+                                            }
+                                            _ => {}
+                                        }
+                                    },
+                                }
+                                if show_dropdown() && !filtered.is_empty() {
+                                    div { class: "cyber-dropdown",
+                                        for (idx, name) in filtered.iter().enumerate() {
+                                            {
+                                                let name_str = *name;
+                                                let is_highlighted = highlight_index() == Some(idx);
+                                                let cls = if is_highlighted {
+                                                    "cyber-dropdown-item cyber-dropdown-item--active"
+                                                } else {
+                                                    "cyber-dropdown-item"
+                                                };
+                                                rsx! {
+                                                    div {
+                                                        class: "{cls}",
+                                                        onmousedown: move |_| {
+                                                            input.set(name_str.to_string());
+                                                            query.set(name_str.to_string());
+                                                            show_dropdown.set(false);
+                                                            highlight_index.set(None);
+                                                        },
+                                                        "{name_str}"
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
-                                },
+                                }
                             }
                             button {
                                 class: "glass-btn",
                                 style: "width: auto; padding: 9px 16px; white-space: nowrap;",
                                 onclick: move |_| declare(()),
                                 "宣言する"
-                            }
-                        }
-                        datalist {
-                            id: "region-candidates",
-                            for region in db(mode).all_regions() {
-                                option { value: "{region.name}" }
                             }
                         }
                         if !error_msg().is_empty() {
