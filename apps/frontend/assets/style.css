@@ -1,23 +1,29 @@
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Share+Tech+Mono&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800;900&family=Share+Tech+Mono&display=swap");
 
 :root {
-  --cyan:          #00f5ff;
-  --magenta:       #ff00ff;
-  --purple:        #7b2fff;
-  --bg:            #050510;
-  --bg2:           #0a0a1a;
-  --card:          rgba(0, 245, 255, 0.04);
-  --border:        rgba(0, 245, 255, 0.25);
-  --text:          #c8e8ff;
-  --text-dim:      rgba(200, 232, 255, 0.5);
-  --glow-cyan:     0 0 8px #00f5ff, 0 0 20px rgba(0, 245, 255, 0.4);
-  --glow-magenta:  0 0 8px #ff00ff, 0 0 20px rgba(255, 0, 255, 0.4);
+  --cyan: #00f5ff;
+  --magenta: #ff00ff;
+  --purple: #7b2fff;
+  --bg: #050510;
+  --bg2: #0a0a1a;
+  --card: rgba(0, 245, 255, 0.04);
+  --border: rgba(0, 245, 255, 0.25);
+  --text: #c8e8ff;
+  --text-dim: rgba(200, 232, 255, 0.5);
+  --glow-cyan: 0 0 8px #00f5ff, 0 0 20px rgba(0, 245, 255, 0.4);
+  --glow-magenta: 0 0 8px #ff00ff, 0 0 20px rgba(255, 0, 255, 0.4);
 }
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
 body {
-  font-family: 'Share Tech Mono', 'Courier New', monospace;
+  font-family: "Share Tech Mono", "Courier New", monospace;
   background: var(--bg);
   color: var(--text);
   min-height: 100vh;
@@ -26,12 +32,13 @@ body {
 
 /* CRT スキャンライン */
 body::before {
-  content: '';
+  content: "";
   position: fixed;
   inset: 0;
   background: repeating-linear-gradient(
     0deg,
-    transparent, transparent 2px,
+    transparent,
+    transparent 2px,
     rgba(0, 245, 255, 0.015) 2px,
     rgba(0, 245, 255, 0.015) 4px
   );
@@ -41,7 +48,7 @@ body::before {
 
 /* グリッドパターン */
 body::after {
-  content: '';
+  content: "";
   position: fixed;
   inset: 0;
   background-image:
@@ -53,15 +60,34 @@ body::after {
 }
 
 @keyframes flicker {
-  0%, 95%, 100% { opacity: 1; }
-  96%            { opacity: 0.85; }
-  97%            { opacity: 1; }
-  98%            { opacity: 0.9; }
+  0%,
+  95%,
+  100% {
+    opacity: 1;
+  }
+  96% {
+    opacity: 0.85;
+  }
+  97% {
+    opacity: 1;
+  }
+  98% {
+    opacity: 0.9;
+  }
 }
 
 @keyframes pulse-cyan {
-  0%, 100% { box-shadow: 0 0 6px var(--cyan), 0 0 18px rgba(0,245,255,0.3); }
-  50%       { box-shadow: 0 0 14px var(--cyan), 0 0 36px rgba(0,245,255,0.55); }
+  0%,
+  100% {
+    box-shadow:
+      0 0 6px var(--cyan),
+      0 0 18px rgba(0, 245, 255, 0.3);
+  }
+  50% {
+    box-shadow:
+      0 0 14px var(--cyan),
+      0 0 36px rgba(0, 245, 255, 0.55);
+  }
 }
 
 /* ═══════════════════════════════════
@@ -94,7 +120,7 @@ body::after {
   top: 14px;
   left: 18px;
   z-index: 10;
-  font-family: 'Orbitron', monospace;
+  font-family: "Orbitron", monospace;
   font-size: 1.1rem;
   font-weight: 900;
   letter-spacing: 0.2em;
@@ -141,16 +167,19 @@ body::after {
   display: flex;
   align-items: baseline;
   gap: 10px;
-  overflow: hidden;
+  flex-wrap: wrap;
+  overflow: visible;
 }
 
 .panel-used-list {
   font-size: 0.75rem;
   color: var(--text-dim);
   letter-spacing: 0.04em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  flex: 1 1 auto;
+  word-break: break-word;
 }
 
 /* 現在地ブロック */
@@ -188,7 +217,9 @@ body::after {
   gap: 8px;
 }
 
-.input-row .glass-input { flex: 1; }
+.input-row .glass-input {
+  flex: 1;
+}
 
 /* ネオンカード（後方互換用） */
 .glass-card {
@@ -200,7 +231,7 @@ body::after {
 
 /* タイトル（後方互換用） */
 .glass-title {
-  font-family: 'Orbitron', monospace;
+  font-family: "Orbitron", monospace;
   font-size: 1.25rem;
   font-weight: 900;
   letter-spacing: 0.22em;
@@ -222,7 +253,7 @@ body::after {
 }
 
 .gc-name {
-  font-family: 'Orbitron', monospace;
+  font-family: "Orbitron", monospace;
   font-size: 1.15rem;
   font-weight: 700;
   color: var(--cyan);
@@ -253,7 +284,7 @@ body::after {
 }
 
 .gc-stat-val {
-  font-family: 'Orbitron', monospace;
+  font-family: "Orbitron", monospace;
   font-size: 1rem;
   font-weight: 700;
   color: var(--text);
@@ -273,16 +304,20 @@ body::after {
   background: rgba(0, 0, 0, 0.5);
   border: 1px solid rgba(0, 245, 255, 0.3);
   border-radius: 2px;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   font-size: 0.88rem;
   color: var(--text);
   caret-color: var(--cyan);
   outline: none;
   letter-spacing: 0.05em;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
 }
 
-.glass-input::placeholder { color: var(--text-dim); }
+.glass-input::placeholder {
+  color: var(--text-dim);
+}
 
 .glass-input:focus {
   border-color: rgba(0, 245, 255, 0.7);
@@ -295,7 +330,7 @@ body::after {
   background: rgba(0, 245, 255, 0.07);
   border: 1px solid var(--cyan);
   border-radius: 2px;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   font-size: 0.88rem;
   font-weight: 600;
   color: var(--cyan);
@@ -303,7 +338,9 @@ body::after {
   cursor: pointer;
   text-shadow: 0 0 6px rgba(0, 245, 255, 0.5);
   box-shadow: 0 0 8px rgba(0, 245, 255, 0.1);
-  transition: background 0.2s, box-shadow 0.2s;
+  transition:
+    background 0.2s,
+    box-shadow 0.2s;
 }
 
 .glass-btn:hover {
@@ -311,7 +348,9 @@ body::after {
   box-shadow: var(--glow-cyan);
 }
 
-.glass-btn:active { transform: scale(0.97); }
+.glass-btn:active {
+  transform: scale(0.97);
+}
 
 .glass-error {
   font-size: 0.76rem;
@@ -359,20 +398,24 @@ body::after {
   right: 0;
   background: rgba(5, 5, 20, 0.97);
   border: 1px solid rgba(0, 245, 255, 0.45);
-  box-shadow: 0 4px 24px rgba(0, 245, 255, 0.15), inset 0 0 20px rgba(0, 245, 255, 0.02);
+  box-shadow:
+    0 4px 24px rgba(0, 245, 255, 0.15),
+    inset 0 0 20px rgba(0, 245, 255, 0.02);
   z-index: 100;
   overflow: hidden;
 }
 
 .cyber-dropdown-item {
   padding: 8px 12px;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   font-size: 0.84rem;
   color: var(--text-dim);
   letter-spacing: 0.06em;
   cursor: pointer;
   border-bottom: 1px solid rgba(0, 245, 255, 0.07);
-  transition: background 0.1s, color 0.1s;
+  transition:
+    background 0.1s,
+    color 0.1s;
 }
 
 .cyber-dropdown-item:last-child {
@@ -408,11 +451,13 @@ body::after {
   width: 100%;
   max-width: 420px;
   text-align: center;
-  box-shadow: 0 0 40px rgba(0, 245, 255, 0.08), inset 0 0 40px rgba(0, 245, 255, 0.02);
+  box-shadow:
+    0 0 40px rgba(0, 245, 255, 0.08),
+    inset 0 0 40px rgba(0, 245, 255, 0.02);
 }
 
 .setup-title {
-  font-family: 'Orbitron', monospace;
+  font-family: "Orbitron", monospace;
   font-size: 2.2rem;
   font-weight: 900;
   letter-spacing: 0.22em;
@@ -477,7 +522,9 @@ body::after {
   box-shadow: 0 0 8px rgba(0, 245, 255, 0.1);
 }
 
-.setup-radio-label input { accent-color: var(--cyan); }
+.setup-radio-label input {
+  accent-color: var(--cyan);
+}
 
 .setup-label {
   display: block;
@@ -496,13 +543,15 @@ body::after {
   background: rgba(0, 0, 0, 0.5);
   border: 1px solid var(--border);
   border-radius: 2px;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   font-size: 1.1rem;
   text-align: center;
   color: var(--text);
   caret-color: var(--cyan);
   outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
   margin-bottom: 22px;
 }
 
@@ -547,7 +596,7 @@ body::after {
 }
 
 .result-title {
-  font-family: 'Orbitron', monospace;
+  font-family: "Orbitron", monospace;
   font-size: 1.5rem;
   font-weight: 800;
   letter-spacing: 0.15em;
@@ -575,7 +624,10 @@ body::after {
   border-radius: 2px;
 }
 
-.ranking-medal { font-size: 1.2rem; flex-shrink: 0; }
+.ranking-medal {
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
 
 .ranking-player {
   flex: 1;
@@ -585,7 +637,7 @@ body::after {
 }
 
 .ranking-score {
-  font-family: 'Orbitron', monospace;
+  font-family: "Orbitron", monospace;
   font-size: 0.92rem;
   font-weight: 700;
   color: var(--magenta);
@@ -654,7 +706,7 @@ body::after {
 }
 
 .conquest-overall-pct {
-  font-family: 'Orbitron', monospace;
+  font-family: "Orbitron", monospace;
   font-size: 2rem;
   font-weight: 800;
   letter-spacing: 0.06em;
@@ -694,7 +746,7 @@ body::after {
 }
 
 .conquest-player-pct {
-  font-family: 'Orbitron', monospace;
+  font-family: "Orbitron", monospace;
   font-size: 0.88rem;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -720,7 +772,7 @@ body::after {
   background: rgba(0, 245, 255, 0.07);
   border: 1px solid var(--cyan);
   border-radius: 2px;
-  font-family: 'Share Tech Mono', monospace;
+  font-family: "Share Tech Mono", monospace;
   font-size: 0.92rem;
   font-weight: 600;
   color: var(--cyan);
@@ -728,7 +780,9 @@ body::after {
   cursor: pointer;
   text-shadow: 0 0 6px rgba(0, 245, 255, 0.5);
   box-shadow: 0 0 8px rgba(0, 245, 255, 0.1);
-  transition: background 0.2s, box-shadow 0.2s;
+  transition:
+    background 0.2s,
+    box-shadow 0.2s;
 }
 
 .primary-btn:hover {
@@ -742,8 +796,12 @@ body::after {
 
 /* モバイルブラウザのアドレスバー考慮 */
 @supports (height: 100dvh) {
-  body        { min-height: 100dvh; }
-  .game-screen { height: 100dvh; }
+  body {
+    min-height: 100dvh;
+  }
+  .game-screen {
+    height: 100dvh;
+  }
 }
 
 @media (max-width: 640px) {
@@ -767,9 +825,13 @@ body::after {
   }
 
   /* ヒントは省略してコンパクトに */
-  .panel-location .gc-hint { display: none; }
+  .panel-location .gc-hint {
+    display: none;
+  }
 
-  .gc-name { font-size: 1rem; }
+  .gc-name {
+    font-size: 1rem;
+  }
 
   .panel-stats {
     grid-column: 2;
@@ -784,7 +846,9 @@ body::after {
     min-width: 48px;
   }
 
-  .gc-stat-val { font-size: 0.85rem; }
+  .gc-stat-val {
+    font-size: 0.85rem;
+  }
 
   .panel-input {
     grid-column: 1 / -1;
@@ -826,7 +890,9 @@ body::after {
     max-width: calc(100% - 32px);
   }
 
-  .setup-title { font-size: 1.7rem; }
+  .setup-title {
+    font-size: 1.7rem;
+  }
 
   .setup-radio-group {
     flex-direction: column;
