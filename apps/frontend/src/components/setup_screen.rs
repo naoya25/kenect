@@ -12,7 +12,7 @@ pub fn SetupScreen(on_start: EventHandler<(Vec<String>, GameMode)>) -> Element {
         div { class: "page setup-wrapper",
             div { class: "setup-card",
                 h1 { class: "setup-title", "Kenect" }
-                p { class: "setup-subtitle", "県や市をつないでいくゲームです" }
+                p { class: "setup-subtitle", "県や東京の自治体をつないでいくゲームです" }
 
                 fieldset { class: "setup-fieldset",
                     legend { class: "setup-legend", "モード" }
@@ -33,7 +33,7 @@ pub fn SetupScreen(on_start: EventHandler<(Vec<String>, GameMode)>) -> Element {
                                 checked: mode() == GameMode::City,
                                 oninput: move |_| mode.set(GameMode::City),
                             }
-                            "市モード（サンプル）"
+                            "東京モード"
                         }
                     }
                 }

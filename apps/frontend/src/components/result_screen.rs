@@ -36,7 +36,7 @@ pub fn ResultScreen(state: GameState, mode: GameMode, on_restart: EventHandler<(
     let ranking = state.ranking();
     let score_unit = match mode {
         GameMode::Prefecture => "県",
-        GameMode::City => "市",
+        GameMode::City => "市区町村",
     };
     let medals = ["🥇", "🥈", "🥉"];
 
