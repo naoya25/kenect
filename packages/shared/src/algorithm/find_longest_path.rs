@@ -131,15 +131,19 @@ fn extend_randomly(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::data::prefecture::PREFECTURES;
+    use crate::data::PREFECTURE_DB;
 
     fn hokkaido() -> &'static Region {
-        PREFECTURES.iter().find(|r| r.roman == "Hokkaido").unwrap()
+        PREFECTURE_DB
+            .all_regions()
+            .iter()
+            .find(|r| r.roman == "Hokkaido")
+            .unwrap()
     }
 
     #[test]
     fn path_is_nonempty() {
-        let path = find_longest_path(PREFECTURES, hokkaido());
+        let path = find_longest_path(PREFECTURE_DB.all_regions(), hokkaido());
         println!("Found path: {:?}", path);
         println!("Path length: {}", path.len());
         assert!(!path.is_empty());
@@ -148,13 +152,13 @@ mod tests {
     #[test]
     fn path_starts_from_given_node() {
         let start = hokkaido();
-        let path = find_longest_path(PREFECTURES, start);
+        let path = find_longest_path(PREFECTURE_DB.all_regions(), start);
         assert_eq!(path.first(), Some(&start.id));
     }
 
     #[test]
     fn path_has_no_duplicate_nodes() {
-        let path = find_longest_path(PREFECTURES, hokkaido());
+        let path = find_longest_path(PREFECTURE_DB.all_regions(), hokkaido());
         let mut seen = std::collections::HashSet::new();
         for id in &path {
             assert!(seen.insert(id.0), "重複ノード: {}", id.0);
@@ -163,10 +167,14 @@ mod tests {
 
     #[test]
     fn consecutive_nodes_are_adjacent() {
-        let path = find_longest_path(PREFECTURES, hokkaido());
+        let path = find_longest_path(PREFECTURE_DB.all_regions(), hokkaido());
         for window in path.windows(2) {
             let (a, b) = (window[0], window[1]);
-            let region_a = PREFECTURES.iter().find(|r| r.id == a).unwrap();
+            let region_a = PREFECTURE_DB
+                .all_regions()
+                .iter()
+                .find(|r| r.id == a)
+                .unwrap();
             assert!(
                 region_a.neighbors.contains(&b),
                 "{} → {} は隣接していない",
@@ -188,7 +196,7 @@ mod tests {
             roman: "",
             neighbors: &[],
         };
-        let path = find_longest_path(PREFECTURES, &unknown);
+        let path = find_longest_path(PREFECTURE_DB.all_regions(), &unknown);
         assert!(path.is_empty());
     }
 }
