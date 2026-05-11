@@ -79,7 +79,18 @@ pub fn ResultScreen(
 ) -> Element {
     let ranking = state.ranking();
     let score_unit = "エリア";
-    let medals = ["🥇", "🥈", "🥉"];
+
+    let mut display_ranks = Vec::with_capacity(ranking.len());
+    let mut current_display_rank = 0usize;
+    let mut previous_score: Option<u32> = None;
+    for (index, &player_index) in ranking.iter().enumerate() {
+        let score = state.players[player_index].score;
+        if previous_score != Some(score) {
+            current_display_rank = index + 1;
+            previous_score = Some(score);
+        }
+        display_ranks.push(current_display_rank);
+    }
 
     let total = db(mode).all_regions().len();
     let overall_count = state.used.len();
@@ -110,10 +121,10 @@ pub fn ResultScreen(
 
                 // ランキング
                 div { class: "ranking-list",
-                    for (rank, &player_index) in ranking.iter().enumerate() {
+                    for (display_rank, &player_index) in display_ranks.iter().zip(ranking.iter()) {
                         div { class: "ranking-item",
                             span { class: "ranking-medal",
-                                "{medals.get(rank).copied().unwrap_or(\"　\")}"
+                                "{*display_rank}位"
                             }
                             span { class: "ranking-player",
                                 "{state.players[player_index].name}"
