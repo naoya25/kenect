@@ -1,7 +1,12 @@
 use dioxus::prelude::*;
 use shared::game::GameState;
+use shared::location::RegionDatabase;
 
 use crate::app::{GameMode, db};
+
+// SVG assets
+const JAPAN_SVG: &str = include_str!("../../assets/japan.svg");
+const TOKYO_SVG: &str = include_str!("../../assets/tokyo.svg");
 
 /// パーセンテージに応じた (color, text-shadow) を返す
 fn conquest_style(pct: u32) -> (&'static str, &'static str) {
@@ -31,13 +36,36 @@ fn bar_color(pct: u32) -> &'static str {
     }
 }
 
+/// ゲーム終了時に表示する、繋いだエリアをハイライトした地図用のCSS
+fn result_map_css(state: &GameState, _db: &'static RegionDatabase, mode: GameMode) -> String {
+    let mut css = String::new();
+
+    let base_selector = match mode {
+        GameMode::Prefecture => ".prefecture",
+        GameMode::City => ".tokyo-city",
+    };
+
+    // 未訪問エリアはプレイ画面と同じスタイル
+    css.push_str(&format!(
+        "{} {{ fill: rgba(5, 5, 20, 0.85) !important; stroke: rgba(0, 245, 255, 0.42) !important; stroke-width: 0.85px !important; }}\n",
+        base_selector
+    ));
+
+    // 訪問したエリアは赤くグロー効果
+    for &id in &state.used {
+        css.push_str(&format!(
+            "{}[data-code=\"{}\"] {{ fill: rgba(255, 0, 0, 0.4) !important; stroke: #ff0000 !important; stroke-width: 1px !important; filter: drop-shadow(0 0 8px #ff0000), drop-shadow(0 0 16px rgba(255, 0, 0, 0.6)); }}\n",
+            base_selector, id.0
+        ));
+    }
+
+    css
+}
+
 #[component]
 pub fn ResultScreen(state: GameState, mode: GameMode, on_restart: EventHandler<()>) -> Element {
     let ranking = state.ranking();
-    let score_unit = match mode {
-        GameMode::Prefecture => "県",
-        GameMode::City => "市区町村",
-    };
+    let score_unit = "エリア";
     let medals = ["🥇", "🥈", "🥉"];
 
     let total = db(mode).all_regions().len();
@@ -45,8 +73,25 @@ pub fn ResultScreen(state: GameState, mode: GameMode, on_restart: EventHandler<(
     let overall_pct = (overall_count as f64 / total as f64 * 100.0).round() as u32;
     let (overall_color, overall_glow) = conquest_style(overall_pct);
 
+    // 地図用SVG
+    let svg = match mode {
+        GameMode::Prefecture => JAPAN_SVG,
+        GameMode::City => TOKYO_SVG,
+    };
+    let map_css = result_map_css(&state, db(mode), mode);
+
     rsx! {
         div { class: "page result-wrapper",
+            // 背景地図
+            div { class: "result-map-bg",
+                style { "{map_css}" }
+                div {
+                    style: "width: 100%; height: 100%;",
+                    dangerous_inner_html: "{svg}",
+                }
+            }
+
+            // 結果カード（前景）
             div { class: "result-card",
                 h1 { class: "result-title", "ゲーム終了！" }
 
