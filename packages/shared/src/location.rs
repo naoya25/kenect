@@ -31,7 +31,7 @@ impl RegionDatabase {
         Self { entries }
     }
 
-    fn get(&self, id: LocationId) -> Option<&Region> {
+    pub fn get(&self, id: LocationId) -> Option<&Region> {
         self.entries.iter().find(|e| e.id == id)
     }
 

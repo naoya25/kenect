@@ -7,6 +7,8 @@ pub struct PlayerState {
     pub name: String,
     pub score: u32,
     pub active: bool,
+    /// Number of wrong declares accumulated for this player. 0 = none, 1 = hint1 shown, 2 = hint2 shown.
+    pub wrong_count: u8,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -40,6 +42,7 @@ impl GameState {
                 name,
                 score: 0,
                 active: true,
+                wrong_count: 0,
             })
             .collect();
         let mut state = Self {
@@ -92,14 +95,31 @@ impl GameState {
             .find(|&id| db.is_adjacent(self.current, id) && !self.used.contains(&id));
 
         if let Some(id) = valid {
+            // correct declare: move, score, reset wrong count for this player
             self.current = id;
             self.used.push(id);
             self.players[self.current_player_index].score += 1;
+            self.players[self.current_player_index].wrong_count = 0;
             self.advance_to_next_active();
             self.eliminate_stuck_players(db);
             Ok(())
         } else {
-            self.eliminate_current_and_advance(db);
+            // incorrect declare: increment this player's wrong_count. If it reaches 3, eliminate
+            // and advance; otherwise, the turn remains with the same player.
+            let wc = &mut self.players[self.current_player_index].wrong_count;
+            *wc = wc.saturating_add(1);
+            if *wc >= 3 {
+                // eliminate this player and advance
+                self.players[self.current_player_index].active = false;
+                if self.active_count() == 0 {
+                    self.phase = GamePhase::GameOver;
+                    return Err(DeclareError::NotAdjacent);
+                }
+                self.advance_to_next_active();
+                self.eliminate_stuck_players(db);
+            } else {
+                // keep the turn with the current player; do not advance
+            }
             Err(DeclareError::NotAdjacent)
         }
     }
@@ -176,20 +196,32 @@ mod tests {
     }
 
     #[test]
-    fn not_adjacent_eliminates_player() {
+    fn not_adjacent_increments_and_eliminates_on_third() {
         let mut game = GameState::new(
             P::Tokyo.id(),
             vec!["P1".into(), "P2".into()],
             &PREFECTURE_DB,
         );
+        // first wrong: increments wrong_count, does not eliminate yet and turn stays
         let err = game.declare(&[P::Osaka.id()], &PREFECTURE_DB).unwrap_err();
         assert_eq!(err, DeclareError::NotAdjacent);
+        assert_eq!(game.players[0].wrong_count, 1);
+        assert!(game.players[0].active);
+        assert_eq!(game.active_count(), 2);
+
+        // second wrong by same player (turn didn't advance)
+        let _ = game.declare(&[P::Osaka.id()], &PREFECTURE_DB).unwrap_err();
+        assert_eq!(game.players[0].wrong_count, 2);
+
+        // third wrong -> eliminated
+        let _ = game.declare(&[P::Osaka.id()], &PREFECTURE_DB).unwrap_err();
+        assert_eq!(game.players[0].wrong_count, 3);
         assert!(!game.players[0].active);
         assert_eq!(game.active_count(), 1);
     }
 
     #[test]
-    fn used_candidate_eliminates_player() {
+    fn used_candidate_increments_wrong_count() {
         let mut game = GameState::new(
             P::Tokyo.id(),
             vec!["P1".into(), "P2".into()],
@@ -198,7 +230,9 @@ mod tests {
         game.declare(&[P::Kanagawa.id()], &PREFECTURE_DB).unwrap();
         let err = game.declare(&[P::Tokyo.id()], &PREFECTURE_DB).unwrap_err();
         assert_eq!(err, DeclareError::NotAdjacent);
-        assert!(!game.players[1].active);
+        // player 1 (index 1) should have wrong_count 1, but still active
+        assert_eq!(game.players[1].wrong_count, 1);
+        assert!(game.players[1].active);
     }
 
     #[test]
@@ -243,8 +277,14 @@ mod tests {
             vec!["P1".into(), "P2".into()],
             &PREFECTURE_DB,
         );
-        game.declare(&[P::Osaka.id()], &PREFECTURE_DB).unwrap_err(); // P1脱落
-        game.declare(&[P::Osaka.id()], &PREFECTURE_DB).unwrap_err(); // P2脱落
+        // eliminate P1 with 3 wrongs
+        for _ in 0..3 {
+            let _ = game.declare(&[P::Osaka.id()], &PREFECTURE_DB).unwrap_err();
+        }
+        // eliminate P2 with 3 wrongs
+        for _ in 0..3 {
+            let _ = game.declare(&[P::Osaka.id()], &PREFECTURE_DB).unwrap_err();
+        }
         assert_eq!(game.phase, GamePhase::GameOver);
     }
 
@@ -264,7 +304,10 @@ mod tests {
             &PREFECTURE_DB,
         );
         game.declare(&[P::Kanagawa.id()], &PREFECTURE_DB).unwrap(); // P1: 1点
-        game.declare(&[P::Osaka.id()], &PREFECTURE_DB).unwrap_err(); // P2脱落: 0点
+        // P2 makes three wrong declares and is eliminated
+        for _ in 0..3 {
+            let _ = game.declare(&[P::Osaka.id()], &PREFECTURE_DB).unwrap_err();
+        }
         let ranking = game.ranking();
         assert_eq!(ranking[0], 0);
         assert_eq!(ranking[1], 1);
