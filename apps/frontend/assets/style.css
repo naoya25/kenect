@@ -193,7 +193,7 @@ body::after {
 /* 上段: 現在地 | 統計 | 入力 */
 .panel-grid {
   display: grid;
-  grid-template-columns: 200px 1fr 1fr;
+  grid-template-columns: auto 1fr auto;
   gap: 16px;
   align-items: center;
 }
@@ -221,17 +221,20 @@ body::after {
   word-break: break-word;
 }
 
-/* 現在地ブロック */
-.panel-location {
-  border-right: 1px solid rgba(0, 245, 255, 0.15);
-  padding-right: 16px;
-}
-
-/* 統計ブロック */
+/* 統計ブロック（左側） */
 .panel-stats {
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 10px;
+}
+
+/* 現在地ブロック（中央） */
+.panel-location {
+  border-left: 1px solid rgba(0, 245, 255, 0.15);
+  border-right: 1px solid rgba(0, 245, 255, 0.15);
+  padding-left: 16px;
+  padding-right: 16px;
+  text-align: center;
 }
 
 .stat-chip {
@@ -247,7 +250,6 @@ body::after {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  border-left: 1px solid rgba(0, 245, 255, 0.15);
   padding-left: 16px;
 }
 
@@ -424,6 +426,8 @@ body::after {
 .input-autocomplete {
   flex: 1;
   position: relative;
+  display: flex;
+  align-items: center;
 }
 
 .input-autocomplete .glass-input {
@@ -1006,6 +1010,14 @@ body::after {
 .app-title-btn:hover {
   text-shadow: var(--glow-cyan);
   box-shadow: inset 0 0 12px rgba(0, 245, 255, 0.2);
+}
+
+.app-rule {
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  margin-left: 24px;
+  letter-spacing: 1px;
+  white-space: nowrap;
 }
 
 .app-title-btn:active {

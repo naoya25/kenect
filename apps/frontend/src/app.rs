@@ -88,6 +88,7 @@ pub fn App() -> Element {
                 onclick: move |_| screen.set(Screen::Setup),
                 "Kenect"
             }
+            div { class: "app-rule", "現在地から隣接する場所を宣言していきましょう" }
         }
         {inner}
     }
