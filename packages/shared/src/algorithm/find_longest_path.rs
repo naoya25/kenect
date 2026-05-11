@@ -1,5 +1,5 @@
-use crate::location::{LocationId, Region};
 use super::rng::Rng;
+use crate::location::{LocationId, Region};
 
 /// 焼きなまし法で start を始点とする長いパスを返す.
 ///
