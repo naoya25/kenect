@@ -124,16 +124,6 @@ impl GameState {
         }
     }
 
-    fn eliminate_current_and_advance(&mut self, db: &RegionDatabase) {
-        self.players[self.current_player_index].active = false;
-        if self.active_count() == 0 {
-            self.phase = GamePhase::GameOver;
-            return;
-        }
-        self.advance_to_next_active();
-        self.eliminate_stuck_players(db);
-    }
-
     fn advance_to_next_active(&mut self) {
         let n = self.players.len();
         for _ in 0..n {
