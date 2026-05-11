@@ -145,7 +145,23 @@ pub fn GameScreen(
             div { class: "glass-panel",
                 div { class: "panel-grid",
 
-                    // 現在地
+                    // 統計（左側）
+                    div { class: "panel-stats",
+                        div { class: "stat-chip",
+                            div { class: "gc-label", "残り" }
+                            div { class: "gc-stat-val", "{active_count}人" }
+                        }
+                        div { class: "stat-chip",
+                            div { class: "gc-label", "プレイヤー" }
+                            div { class: "gc-stat-val", "{current_player_name}" }
+                        }
+                        div { class: "stat-chip",
+                            div { class: "gc-label", "択" }
+                            div { class: "gc-stat-val", "{move_count}" }
+                        }
+                    }
+
+                    // 現在地（中央）
                     div { class: "panel-location",
                         div { class: "gc-label", "現在地" }
                         div { class: "gc-name", "{current_name}" }
@@ -154,23 +170,7 @@ pub fn GameScreen(
                         }
                     }
 
-                    // 統計
-                    div { class: "panel-stats",
-                        div { class: "stat-chip",
-                            div { class: "gc-label", "プレイヤー" }
-                            div { class: "gc-stat-val", "{current_player_name}" }
-                        }
-                        div { class: "stat-chip",
-                            div { class: "gc-label", "残り" }
-                            div { class: "gc-stat-val", "{active_count}人" }
-                        }
-                        div { class: "stat-chip",
-                            div { class: "gc-label", "択" }
-                            div { class: "gc-stat-val", "{move_count}" }
-                        }
-                    }
-
-                    // 入力
+                    // 入力（右側）
                     div { class: "panel-input",
                         div { class: "input-row",
                             div { class: "input-autocomplete",
