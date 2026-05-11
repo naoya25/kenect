@@ -69,7 +69,7 @@ fn learning_map_css(selected: Option<LocationId>, mode: GameMode) -> String {
     };
 
     css.push_str(&format!(
-        "{} {{ fill: rgba(5, 5, 20, 0.85) !important; stroke: rgba(0, 245, 255, 0.42) !important; stroke-width: 0.85px !important; cursor: pointer; transition: fill 0.15s ease, filter 0.15s ease, stroke 0.15s ease; }}\n",
+        "{} {{ fill: transparent !important; stroke: rgba(0, 245, 255, 0.42) !important; stroke-width: 0.85px !important; cursor: pointer; transition: fill 0.15s ease, filter 0.15s ease, stroke 0.15s ease; }}\n",
         base_selector
     ));
 
