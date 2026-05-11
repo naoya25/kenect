@@ -1,12 +1,13 @@
 use dioxus::prelude::*;
 
-use crate::app::{GameMode, ViewMode};
+use crate::app::{GameMode, HintMode, ViewMode};
 
 #[component]
-pub fn SetupScreen(on_start: EventHandler<(Vec<String>, GameMode, ViewMode)>) -> Element {
+pub fn SetupScreen(on_start: EventHandler<(Vec<String>, GameMode, ViewMode, HintMode)>) -> Element {
     let mut player_count = use_signal(|| 2usize);
     let mut mode = use_signal(|| GameMode::Prefecture);
     let mut view_mode = use_signal(|| ViewMode::Look);
+    let mut hint_mode = use_signal(|| HintMode::Normal);
     let mut names: Signal<Vec<String>> = use_signal(|| vec![String::new(), String::new()]);
 
     rsx! {
@@ -58,6 +59,30 @@ pub fn SetupScreen(on_start: EventHandler<(Vec<String>, GameMode, ViewMode)>) ->
                                 oninput: move |_| view_mode.set(ViewMode::NoLook),
                             }
                             "ノールックモード"
+                        }
+                    }
+                }
+
+                fieldset { class: "setup-fieldset",
+                    legend { class: "setup-legend", "ヒント" }
+                    div { class: "setup-radio-group",
+                        label { class: "setup-radio-label",
+                            input {
+                                r#type: "radio",
+                                name: "hint_mode",
+                                checked: hint_mode() == HintMode::Normal,
+                                oninput: move |_| hint_mode.set(HintMode::Normal),
+                            }
+                            "通常ヒント"
+                        }
+                        label { class: "setup-radio-label",
+                            input {
+                                r#type: "radio",
+                                name: "hint_mode",
+                                checked: hint_mode() == HintMode::NoHint,
+                                oninput: move |_| hint_mode.set(HintMode::NoHint),
+                            }
+                            "ノーヒントモード"
                         }
                     }
                 }
@@ -115,7 +140,7 @@ pub fn SetupScreen(on_start: EventHandler<(Vec<String>, GameMode, ViewMode)>) ->
                                 }
                             })
                             .collect();
-                                on_start.call((resolved, mode(), view_mode()));
+                                on_start.call((resolved, mode(), view_mode(), hint_mode()));
                     },
                     "ゲーム開始"
                 }

@@ -18,6 +18,12 @@ pub enum ViewMode {
     NoLook,
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum HintMode {
+    Normal,
+    NoHint,
+}
+
 pub fn db(mode: GameMode) -> &'static RegionDatabase {
     match mode {
         GameMode::Prefecture => &PREFECTURE_DB,
@@ -28,8 +34,8 @@ pub fn db(mode: GameMode) -> &'static RegionDatabase {
 #[derive(Clone)]
 pub enum Screen {
     Setup,
-    Game(GameState, GameMode, ViewMode),
-    Result(GameState, GameMode, ViewMode),
+    Game(GameState, GameMode, ViewMode, HintMode),
+    Result(GameState, GameMode, ViewMode, HintMode),
 }
 
 const CSS: &str = include_str!("../assets/style.css");
@@ -41,31 +47,33 @@ pub fn App() -> Element {
     let inner = match screen() {
         Screen::Setup => rsx! {
             SetupScreen {
-                on_start: move |(names, mode, view_mode)| {
+                on_start: move |(names, mode, view_mode, hint_mode)| {
                     let start = random_start(db(mode));
-                    screen.set(Screen::Game(GameState::new(start, names, db(mode)), mode, view_mode));
+                    screen.set(Screen::Game(GameState::new(start, names, db(mode)), mode, view_mode, hint_mode));
                 }
             }
         },
-        Screen::Game(state, mode, view_mode) => rsx! {
+        Screen::Game(state, mode, view_mode, hint_mode) => rsx! {
             GameScreen {
                 state: state.clone(),
                 mode,
                 view_mode,
+                hint_mode,
                 on_update: move |new_state: GameState| {
                     if new_state.phase == GamePhase::GameOver {
-                        screen.set(Screen::Result(new_state, mode, view_mode));
+                        screen.set(Screen::Result(new_state, mode, view_mode, hint_mode));
                     } else {
-                        screen.set(Screen::Game(new_state, mode, view_mode));
+                        screen.set(Screen::Game(new_state, mode, view_mode, hint_mode));
                     }
                 }
             }
         },
-        Screen::Result(state, mode, view_mode) => rsx! {
+        Screen::Result(state, mode, view_mode, hint_mode) => rsx! {
             ResultScreen {
                 state: state.clone(),
                 mode,
                 view_mode,
+                hint_mode,
                 on_restart: move |_| screen.set(Screen::Setup),
             }
         },

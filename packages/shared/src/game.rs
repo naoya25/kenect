@@ -7,7 +7,7 @@ pub struct PlayerState {
     pub name: String,
     pub score: u32,
     pub active: bool,
-    /// Number of wrong declares accumulated for this player. 0 = none, 1 = hint1 shown, 2 = hint2 shown.
+    /// Number of wrong declares accumulated for this player.
     pub wrong_count: u8,
 }
 
@@ -81,6 +81,15 @@ impl GameState {
         candidates: &[LocationId],
         db: &RegionDatabase,
     ) -> Result<(), DeclareError> {
+        self.declare_with_miss_limit(candidates, db, 3)
+    }
+
+    pub fn declare_with_miss_limit(
+        &mut self,
+        candidates: &[LocationId],
+        db: &RegionDatabase,
+        miss_limit: u8,
+    ) -> Result<(), DeclareError> {
         if self.phase != GamePhase::Playing {
             return Err(DeclareError::GameAlreadyOver);
         }
@@ -108,7 +117,7 @@ impl GameState {
             // and advance; otherwise, the turn remains with the same player.
             let wc = &mut self.players[self.current_player_index].wrong_count;
             *wc = wc.saturating_add(1);
-            if *wc >= 3 {
+            if *wc >= miss_limit {
                 // eliminate this player and advance
                 self.players[self.current_player_index].active = false;
                 if self.active_count() == 0 {

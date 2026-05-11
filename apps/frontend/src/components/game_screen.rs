@@ -2,7 +2,7 @@ use dioxus::prelude::*;
 use gloo_timers::future::sleep;
 use shared::game::{DeclareError, GameState};
 
-use crate::app::{GameMode, ViewMode, db};
+use crate::app::{GameMode, HintMode, ViewMode, db};
 use crate::components::MapView;
 use crate::utils::used_names;
 
@@ -11,6 +11,7 @@ pub fn GameScreen(
     state: GameState,
     mode: GameMode,
     view_mode: ViewMode,
+    hint_mode: HintMode,
     on_update: EventHandler<GameState>,
 ) -> Element {
     // query: ユーザーが実際に打った文字（フィルタリングに使う）
@@ -33,6 +34,7 @@ pub fn GameScreen(
     let current_player_name = state.players[state.current_player_index].name.clone();
     let active_count = state.active_count();
     let move_count = db(mode).valid_move_count(state.current, &state.used);
+    let miss_limit = if hint_mode == HintMode::NoHint { 1 } else { 3 };
 
     // ターン変更を検出
     let current_wrong_count = state.players[state.current_player_index].wrong_count;
@@ -48,7 +50,7 @@ pub fn GameScreen(
             effect_message.set(format!("{}ミス", current_wrong_count));
         } else if player_changed {
             let previous_wrong_count = state.players[previous_player_index].wrong_count;
-            if previous_wrong_count >= 3 {
+            if previous_wrong_count >= miss_limit {
                 effect_message.set(format!("{}ミス: チェンジ", previous_wrong_count));
             } else if previous_wrong_count > 0 {
                 effect_message.set(format!("{}ミス", previous_wrong_count));
@@ -96,7 +98,7 @@ pub fn GameScreen(
         let name = input();
         let mut new_state = state_snap.clone();
         let candidates = db(mode).find_by_name(&name);
-        match new_state.declare(&candidates, db(mode)) {
+        match new_state.declare_with_miss_limit(&candidates, db(mode), miss_limit) {
             Ok(()) => {
                 error_msg.set(String::new());
             }
@@ -147,7 +149,9 @@ pub fn GameScreen(
                     div { class: "panel-location",
                         div { class: "gc-label", "現在地" }
                         div { class: "gc-name", "{current_name}" }
-                        div { class: "gc-hint", "{current_hint}" }
+                        if hint_mode == HintMode::Normal {
+                            div { class: "gc-hint", "{current_hint}" }
+                        }
                     }
 
                     // 統計

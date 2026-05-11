@@ -2,7 +2,7 @@ use dioxus::prelude::*;
 use shared::game::GameState;
 use shared::location::RegionDatabase;
 
-use crate::app::{GameMode, ViewMode, db};
+use crate::app::{GameMode, HintMode, ViewMode, db};
 
 // SVG assets
 const JAPAN_SVG: &str = include_str!("../../assets/japan.svg");
@@ -74,6 +74,7 @@ pub fn ResultScreen(
     state: GameState,
     mode: GameMode,
     view_mode: ViewMode,
+    hint_mode: HintMode,
     on_restart: EventHandler<()>,
 ) -> Element {
     let ranking = state.ranking();
@@ -186,6 +187,10 @@ pub fn ResultScreen(
 
                 if view_mode == ViewMode::NoLook {
                     div { class: "result-mode-label", "ノールックモード" }
+                }
+
+                if hint_mode == HintMode::NoHint {
+                    div { class: "result-mode-label", "ノーヒントモード" }
                 }
 
                 button {
