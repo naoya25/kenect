@@ -908,6 +908,9 @@ body::after {
   align-items: center;
   justify-content: center;
   padding: 12px;
+  touch-action: none;
+  transform-origin: center center;
+  will-change: transform;
 }
 
 .learning-map-layer svg {
@@ -917,6 +920,7 @@ body::after {
   max-height: 100%;
   display: block;
   object-fit: contain;
+  touch-action: none;
 }
 
 .learning-status-panel {
@@ -983,6 +987,12 @@ body::after {
   .learning-map-stage {
     height: calc(100dvh - 60px);
     min-height: calc(100dvh - 60px);
+  }
+}
+
+@media (pointer: coarse) {
+  .learning-map-layer {
+    padding: 8px;
   }
 }
 
