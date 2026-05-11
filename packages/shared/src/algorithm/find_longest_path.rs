@@ -98,16 +98,11 @@ pub fn find_longest_path(graph: &[Region], start: &Region) -> Vec<LocationId> {
 fn extend_randomly(
     id_map: &[Option<&Region>],
     path: &mut Vec<LocationId>,
-    visited: &mut Vec<bool>,
+    visited: &mut [bool],
     max_id: usize,
     rng: &mut Rng,
 ) {
-    loop {
-        let current = match path.last() {
-            Some(&id) => id,
-            None => break,
-        };
-
+    while let Some(&current) = path.last() {
         let nbs: Vec<LocationId> = id_map
             .get(current.0 as usize)
             .and_then(|r| *r)
