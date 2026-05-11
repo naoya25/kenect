@@ -29,19 +29,15 @@ pub fn LearningScreen(mode: GameMode) -> Element {
                     onclick: move |evt: MouseEvent| {
                         let mut next_selected: Option<LocationId> = None;
 
-                        if let Some(web_event) = evt.data().as_ref().try_as_web_event() {
-                            if let Some(target) = web_event.target() {
-                                if let Ok(element) = target.dyn_into::<web_sys::Element>() {
-                                    if let Some(hit) = element.closest("[data-code]").ok().flatten() {
-                                        if let Some(code) = hit.get_attribute("data-code") {
-                                            if let Ok(raw) = code.parse::<u32>() {
-                                                let id = LocationId(raw);
-                                                next_selected = if selected() == Some(id) { None } else { Some(id) };
-                                            }
-                                        }
-                                    }
-                                }
-                            }
+                        if let Some(web_event) = evt.data().as_ref().try_as_web_event()
+                            && let Some(target) = web_event.target()
+                            && let Ok(element) = target.dyn_into::<web_sys::Element>()
+                            && let Some(hit) = element.closest("[data-code]").ok().flatten()
+                            && let Some(code) = hit.get_attribute("data-code")
+                            && let Ok(raw) = code.parse::<u32>()
+                        {
+                            let id = LocationId(raw);
+                            next_selected = if selected() == Some(id) { None } else { Some(id) };
                         }
 
                         selected.set(next_selected);
