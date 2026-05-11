@@ -3,7 +3,10 @@ use dioxus::prelude::*;
 use crate::app::{GameMode, HintMode, ViewMode};
 
 #[component]
-pub fn SetupScreen(on_start: EventHandler<(Vec<String>, GameMode, ViewMode, HintMode)>) -> Element {
+pub fn SetupScreen(
+    on_start: EventHandler<(Vec<String>, GameMode, ViewMode, HintMode)>,
+    on_learn: EventHandler<GameMode>,
+) -> Element {
     let mut player_count = use_signal(|| 1usize);
     let mut mode = use_signal(|| GameMode::Prefecture);
     let mut view_mode = use_signal(|| ViewMode::Look);
@@ -143,6 +146,13 @@ pub fn SetupScreen(on_start: EventHandler<(Vec<String>, GameMode, ViewMode, Hint
                                 on_start.call((resolved, mode(), view_mode(), hint_mode()));
                     },
                     "ゲーム開始"
+                }
+
+                button {
+                    class: "secondary-btn",
+                    style: "width: 100%; margin-top: 10px;",
+                    onclick: move |_| on_learn.call(mode()),
+                    "勉強する"
                 }
             }
         }

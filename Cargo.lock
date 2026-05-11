@@ -1263,11 +1263,14 @@ name = "frontend"
 version = "0.1.0"
 dependencies = [
  "dioxus",
+ "dioxus-web",
  "getrandom 0.4.2",
  "gloo-timers",
  "rand 0.10.1",
  "reqwest 0.13.3",
  "shared",
+ "wasm-bindgen",
+ "web-sys",
 ]
 
 [[package]]
