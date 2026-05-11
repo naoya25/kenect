@@ -66,6 +66,13 @@ pub fn App() -> Element {
     rsx! {
         document::Meta { name: "viewport", content: "width=device-width, initial-scale=1" }
         document::Style { "{CSS}" }
+        div { class: "app-header",
+            button {
+                class: "app-title-btn",
+                onclick: move |_| screen.set(Screen::Setup),
+                "Kenect"
+            }
+        }
         {inner}
     }
 }
