@@ -4,7 +4,7 @@ use crate::app::{GameMode, HintMode, ViewMode};
 
 #[component]
 pub fn SetupScreen(on_start: EventHandler<(Vec<String>, GameMode, ViewMode, HintMode)>) -> Element {
-    let mut player_count = use_signal(|| 2usize);
+    let mut player_count = use_signal(|| 1usize);
     let mut mode = use_signal(|| GameMode::Prefecture);
     let mut view_mode = use_signal(|| ViewMode::Look);
     let mut hint_mode = use_signal(|| HintMode::Normal);
