@@ -12,6 +12,12 @@ pub enum GameMode {
     City,
 }
 
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum ViewMode {
+    Look,
+    NoLook,
+}
+
 pub fn db(mode: GameMode) -> &'static RegionDatabase {
     match mode {
         GameMode::Prefecture => &PREFECTURE_DB,
@@ -22,7 +28,7 @@ pub fn db(mode: GameMode) -> &'static RegionDatabase {
 #[derive(Clone)]
 pub enum Screen {
     Setup,
-    Game(GameState, GameMode),
+    Game(GameState, GameMode, ViewMode),
     Result(GameState, GameMode),
 }
 
@@ -35,21 +41,22 @@ pub fn App() -> Element {
     let inner = match screen() {
         Screen::Setup => rsx! {
             SetupScreen {
-                on_start: move |(names, mode)| {
+                on_start: move |(names, mode, view_mode)| {
                     let start = random_start(db(mode));
-                    screen.set(Screen::Game(GameState::new(start, names, db(mode)), mode));
+                    screen.set(Screen::Game(GameState::new(start, names, db(mode)), mode, view_mode));
                 }
             }
         },
-        Screen::Game(state, mode) => rsx! {
+        Screen::Game(state, mode, view_mode) => rsx! {
             GameScreen {
                 state: state.clone(),
                 mode,
+                view_mode,
                 on_update: move |new_state: GameState| {
                     if new_state.phase == GamePhase::GameOver {
                         screen.set(Screen::Result(new_state, mode));
                     } else {
-                        screen.set(Screen::Game(new_state, mode));
+                        screen.set(Screen::Game(new_state, mode, view_mode));
                     }
                 }
             }

@@ -1,11 +1,12 @@
 use dioxus::prelude::*;
 
-use crate::app::GameMode;
+use crate::app::{GameMode, ViewMode};
 
 #[component]
-pub fn SetupScreen(on_start: EventHandler<(Vec<String>, GameMode)>) -> Element {
+pub fn SetupScreen(on_start: EventHandler<(Vec<String>, GameMode, ViewMode)>) -> Element {
     let mut player_count = use_signal(|| 2usize);
     let mut mode = use_signal(|| GameMode::Prefecture);
+    let mut view_mode = use_signal(|| ViewMode::Look);
     let mut names: Signal<Vec<String>> = use_signal(|| vec![String::new(), String::new()]);
 
     rsx! {
@@ -33,6 +34,30 @@ pub fn SetupScreen(on_start: EventHandler<(Vec<String>, GameMode)>) -> Element {
                                 oninput: move |_| mode.set(GameMode::City),
                             }
                             "東京モード"
+                        }
+                    }
+                }
+
+                fieldset { class: "setup-fieldset",
+                    legend { class: "setup-legend", "表示" }
+                    div { class: "setup-radio-group",
+                        label { class: "setup-radio-label",
+                            input {
+                                r#type: "radio",
+                                name: "view_mode",
+                                checked: view_mode() == ViewMode::Look,
+                                oninput: move |_| view_mode.set(ViewMode::Look),
+                            }
+                            "ルックモード"
+                        }
+                        label { class: "setup-radio-label",
+                            input {
+                                r#type: "radio",
+                                name: "view_mode",
+                                checked: view_mode() == ViewMode::NoLook,
+                                oninput: move |_| view_mode.set(ViewMode::NoLook),
+                            }
+                            "ノールックモード"
                         }
                     }
                 }
@@ -90,7 +115,7 @@ pub fn SetupScreen(on_start: EventHandler<(Vec<String>, GameMode)>) -> Element {
                                 }
                             })
                             .collect();
-                        on_start.call((resolved, mode()));
+                                on_start.call((resolved, mode(), view_mode()));
                     },
                     "ゲーム開始"
                 }

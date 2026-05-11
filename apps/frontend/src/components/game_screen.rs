@@ -2,12 +2,17 @@ use dioxus::prelude::*;
 use gloo_timers::future::sleep;
 use shared::game::{DeclareError, GameState};
 
-use crate::app::{GameMode, db};
+use crate::app::{GameMode, ViewMode, db};
 use crate::components::MapView;
 use crate::utils::used_names;
 
 #[component]
-pub fn GameScreen(state: GameState, mode: GameMode, on_update: EventHandler<GameState>) -> Element {
+pub fn GameScreen(
+    state: GameState,
+    mode: GameMode,
+    view_mode: ViewMode,
+    on_update: EventHandler<GameState>,
+) -> Element {
     // query: ユーザーが実際に打った文字（フィルタリングに使う）
     // input: テキストフィールドの表示値（矢印キーで候補名に書き換わる）
     let mut query = use_signal(String::new);
@@ -17,9 +22,11 @@ pub fn GameScreen(state: GameState, mode: GameMode, on_update: EventHandler<Game
     let mut highlight_index: Signal<Option<usize>> = use_signal(|| None);
 
     // ターン変更エフェクト用
-    let mut last_player_index = use_signal(|| usize::MAX);
+    let mut last_player_index = use_signal(|| state.current_player_index);
+    let mut last_wrong_count = use_signal(|| state.players[state.current_player_index].wrong_count);
     let mut show_turn_effect = use_signal(|| false);
     let mut effect_player_name = use_signal(String::new);
+    let mut effect_message = use_signal(String::new);
 
     let current_name = db(mode).name_of(state.current).unwrap_or("");
     let current_hint = db(mode).hint_of(state.current).unwrap_or_default();
@@ -28,9 +35,30 @@ pub fn GameScreen(state: GameState, mode: GameMode, on_update: EventHandler<Game
     let move_count = db(mode).valid_move_count(state.current, &state.used);
 
     // ターン変更を検出
-    if last_player_index() != state.current_player_index {
+    let current_wrong_count = state.players[state.current_player_index].wrong_count;
+    let player_changed = last_player_index() != state.current_player_index;
+    let wrong_count_changed = last_wrong_count() != current_wrong_count;
+
+    if player_changed || wrong_count_changed {
+        let previous_player_index = last_player_index();
         last_player_index.set(state.current_player_index);
-        effect_player_name.set(current_player_name.clone());
+        last_wrong_count.set(current_wrong_count);
+
+        if current_wrong_count > 0 && !player_changed {
+            effect_message.set(format!("{}ミス", current_wrong_count));
+        } else if player_changed {
+            let previous_wrong_count = state.players[previous_player_index].wrong_count;
+            if previous_wrong_count >= 3 {
+                effect_message.set(format!("{}ミス: チェンジ", previous_wrong_count));
+            } else if previous_wrong_count > 0 {
+                effect_message.set(format!("{}ミス", previous_wrong_count));
+            } else {
+                effect_player_name.set(current_player_name.clone());
+                effect_message.set(format!("{}のターン", current_player_name));
+            }
+        } else {
+            effect_message.set(String::new());
+        }
         show_turn_effect.set(true);
 
         // 2秒後に非表示
@@ -92,14 +120,20 @@ pub fn GameScreen(state: GameState, mode: GameMode, on_update: EventHandler<Game
 
             // 地図エリア（上）
             div { class: "map-section",
-                MapView { state: state.clone(), mode }
+                if view_mode == ViewMode::Look {
+                    MapView { state: state.clone(), mode }
+                }
                 div { class: "game-title-badge", "Kenect" }
 
                 // ターン変更エフェクト
                 if show_turn_effect() {
                     div { class: "turn-change-effect",
                         div { class: "turn-change-text",
-                            "{effect_player_name}のターン"
+                            if effect_message().is_empty() {
+                                "{effect_player_name}のターン"
+                            } else {
+                                "{effect_message}"
+                            }
                         }
                     }
                 }
