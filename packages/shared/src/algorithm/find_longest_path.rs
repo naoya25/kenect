@@ -140,6 +140,8 @@ mod tests {
     #[test]
     fn path_is_nonempty() {
         let path = find_longest_path(PREFECTURES, hokkaido());
+        println!("Found path: {:?}", path);
+        println!("Path length: {}", path.len());
         assert!(!path.is_empty());
     }
 
