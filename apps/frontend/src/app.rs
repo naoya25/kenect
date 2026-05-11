@@ -29,7 +29,7 @@ pub fn db(mode: GameMode) -> &'static RegionDatabase {
 pub enum Screen {
     Setup,
     Game(GameState, GameMode, ViewMode),
-    Result(GameState, GameMode),
+    Result(GameState, GameMode, ViewMode),
 }
 
 const CSS: &str = include_str!("../assets/style.css");
@@ -54,17 +54,18 @@ pub fn App() -> Element {
                 view_mode,
                 on_update: move |new_state: GameState| {
                     if new_state.phase == GamePhase::GameOver {
-                        screen.set(Screen::Result(new_state, mode));
+                        screen.set(Screen::Result(new_state, mode, view_mode));
                     } else {
                         screen.set(Screen::Game(new_state, mode, view_mode));
                     }
                 }
             }
         },
-        Screen::Result(state, mode) => rsx! {
+        Screen::Result(state, mode, view_mode) => rsx! {
             ResultScreen {
                 state: state.clone(),
                 mode,
+                view_mode,
                 on_restart: move |_| screen.set(Screen::Setup),
             }
         },

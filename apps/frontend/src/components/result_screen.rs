@@ -2,7 +2,7 @@ use dioxus::prelude::*;
 use shared::game::GameState;
 use shared::location::RegionDatabase;
 
-use crate::app::{GameMode, db};
+use crate::app::{GameMode, ViewMode, db};
 
 // SVG assets
 const JAPAN_SVG: &str = include_str!("../../assets/japan.svg");
@@ -36,6 +36,13 @@ fn bar_color(pct: u32) -> &'static str {
     }
 }
 
+fn mode_label(mode: GameMode) -> &'static str {
+    match mode {
+        GameMode::Prefecture => "県モード",
+        GameMode::City => "東京モード",
+    }
+}
+
 /// ゲーム終了時に表示する、繋いだエリアをハイライトした地図用のCSS
 fn result_map_css(state: &GameState, _db: &'static RegionDatabase, mode: GameMode) -> String {
     let mut css = String::new();
@@ -63,7 +70,12 @@ fn result_map_css(state: &GameState, _db: &'static RegionDatabase, mode: GameMod
 }
 
 #[component]
-pub fn ResultScreen(state: GameState, mode: GameMode, on_restart: EventHandler<()>) -> Element {
+pub fn ResultScreen(
+    state: GameState,
+    mode: GameMode,
+    view_mode: ViewMode,
+    on_restart: EventHandler<()>,
+) -> Element {
     let ranking = state.ranking();
     let score_unit = "エリア";
     let medals = ["🥇", "🥈", "🥉"];
@@ -168,6 +180,12 @@ pub fn ResultScreen(state: GameState, mode: GameMode, on_restart: EventHandler<(
                             }
                         }
                     }
+                }
+
+                div { class: "result-mode-label", "{mode_label(mode)}" }
+
+                if view_mode == ViewMode::NoLook {
+                    div { class: "result-mode-label", "ノールックモード" }
                 }
 
                 button {
