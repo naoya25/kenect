@@ -36,9 +36,14 @@ impl RegionDatabase {
     }
 
     pub fn find_by_name(&self, name: &str) -> Vec<LocationId> {
+        let name_lower = name.to_lowercase();
         self.entries
             .iter()
-            .filter(|e| e.name == name)
+            .filter(|e| {
+                e.name.to_lowercase() == name_lower
+                    || e.kana.to_lowercase() == name_lower
+                    || e.roman.to_lowercase() == name_lower
+            })
             .map(|e| e.id)
             .collect()
     }

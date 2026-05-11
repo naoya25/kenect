@@ -48,10 +48,15 @@ pub fn GameScreen(state: GameState, mode: GameMode, on_update: EventHandler<Game
         if q.is_empty() {
             vec![]
         } else {
+            let q_lower = q.to_lowercase();
             db(mode)
                 .all_regions()
                 .iter()
-                .filter(|r| r.name.contains(q.as_str()) || r.kana.contains(q.as_str()))
+                .filter(|r| {
+                    r.name.contains(q.as_str())
+                        || r.kana.contains(q.as_str())
+                        || r.roman.to_lowercase().contains(&q_lower)
+                })
                 .map(|r| r.name)
                 .take(8)
                 .collect()
