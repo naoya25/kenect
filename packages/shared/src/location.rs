@@ -26,6 +26,70 @@ pub struct RegionDatabase {
     entries: &'static [Region],
 }
 
+/// Parse regions from CSV format: id,name,kana,roman,parent,neighbors
+/// parent: empty or numeric ID (or numeric for city parent prefecture)
+/// neighbors: pipe-separated numeric IDs
+pub fn parse_regions_from_csv(csv_data: &str, kind: RegionKind) -> &'static [Region] {
+    let mut regions: Vec<Region> = Vec::new();
+
+    for (i, line) in csv_data.lines().enumerate() {
+        if i == 0 {
+            continue; // header
+        }
+        let line = line.trim();
+        if line.is_empty() {
+            continue;
+        }
+
+        let mut parts = line.splitn(6, ',');
+        let id_str = parts.next().unwrap_or("");
+        let name = parts.next().unwrap_or("");
+        let kana = parts.next().unwrap_or("");
+        let roman = parts.next().unwrap_or("");
+        let parent_str = parts.next().unwrap_or("");
+        let neighbors_field = parts.next().unwrap_or("");
+
+        let id_num: u32 = id_str.parse().expect("invalid id in CSV");
+        let id = LocationId(id_num);
+
+        let name_static: &'static str = Box::leak(name.to_string().into_boxed_str());
+        let kana_static: &'static str = Box::leak(kana.to_string().into_boxed_str());
+        let roman_static: &'static str = Box::leak(roman.to_string().into_boxed_str());
+
+        let parent: Option<LocationId> = if parent_str.is_empty() {
+            None
+        } else {
+            parent_str.parse::<u32>().ok().map(LocationId)
+        };
+
+        let neighbors_vec: Vec<LocationId> = if neighbors_field.is_empty() {
+            Vec::new()
+        } else {
+            neighbors_field
+                .split('|')
+                .filter(|s| !s.is_empty())
+                .map(|s| LocationId(s.parse::<u32>().expect("invalid neighbor id")))
+                .collect()
+        };
+
+        let neighbors_box = neighbors_vec.into_boxed_slice();
+        let neighbors_static: &'static [LocationId] = Box::leak(neighbors_box);
+
+        regions.push(Region {
+            id,
+            kind,
+            parent,
+            name: name_static,
+            kana: kana_static,
+            roman: roman_static,
+            neighbors: neighbors_static,
+        });
+    }
+
+    let boxed = regions.into_boxed_slice();
+    Box::leak(boxed)
+}
+
 impl RegionDatabase {
     pub const fn new(entries: &'static [Region]) -> Self {
         Self { entries }
