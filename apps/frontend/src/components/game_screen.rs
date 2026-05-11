@@ -1,4 +1,5 @@
 use dioxus::prelude::*;
+use gloo_timers::future::sleep;
 use shared::game::{DeclareError, GameState};
 
 use crate::app::{GameMode, db};
@@ -15,12 +16,32 @@ pub fn GameScreen(state: GameState, mode: GameMode, on_update: EventHandler<Game
     let mut show_dropdown = use_signal(|| false);
     let mut highlight_index: Signal<Option<usize>> = use_signal(|| None);
 
+    // ターン変更エフェクト用
+    let mut last_player_index = use_signal(|| usize::MAX);
+    let mut show_turn_effect = use_signal(|| false);
+    let mut effect_player_name = use_signal(String::new);
+
     let current_name = db(mode).name_of(state.current).unwrap_or("");
     let current_hint = db(mode).hint_of(state.current).unwrap_or_default();
     let current_player_name = state.players[state.current_player_index].name.clone();
     let active_count = state.active_count();
     let move_count = db(mode).valid_move_count(state.current, &state.used);
 
+    // ターン変更を検出
+    if last_player_index() != state.current_player_index {
+        last_player_index.set(state.current_player_index);
+        effect_player_name.set(current_player_name.clone());
+        show_turn_effect.set(true);
+
+        // 2秒後に非表示
+        dioxus::prelude::spawn({
+            let mut effect_signal = show_turn_effect;
+            async move {
+                sleep(std::time::Duration::from_secs(2)).await;
+                effect_signal.set(false);
+            }
+        });
+    }
     // フィルタリングは query ベース（矢印キー操作で変わらない）
     let filtered: Vec<&'static str> = {
         let q = query();
@@ -68,6 +89,15 @@ pub fn GameScreen(state: GameState, mode: GameMode, on_update: EventHandler<Game
             div { class: "map-section",
                 MapView { state: state.clone(), mode }
                 div { class: "game-title-badge", "Kenect" }
+
+                // ターン変更エフェクト
+                if show_turn_effect() {
+                    div { class: "turn-change-effect",
+                        div { class: "turn-change-text",
+                            "{effect_player_name}のターン"
+                        }
+                    }
+                }
             }
 
             // コントロールエリア（下）

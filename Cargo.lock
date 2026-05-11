@@ -1264,6 +1264,7 @@ version = "0.1.0"
 dependencies = [
  "dioxus",
  "getrandom 0.4.2",
+ "gloo-timers",
  "rand 0.10.1",
  "reqwest 0.13.3",
  "shared",
