@@ -39,15 +39,15 @@ fn region_css(state: &GameState, db: &'static RegionDatabase, mode: GameMode) ->
 
     // デフォルト: 暗い地図 + サイアンの境界
     css.push_str(&format!(
-        "{} {{ fill: rgba(5, 5, 20, 0.85) !important; stroke: rgba(0, 245, 255, 0.22) !important; stroke-width: 0.6px !important; }}\n",
+        "{} {{ fill: rgba(5, 5, 20, 0.85) !important; stroke: rgba(0, 245, 255, 0.42) !important; stroke-width: 0.85px !important; }}\n",
         base_selector
     ));
 
-    // 使用済み: 暗いグレー
+    // 使用済み: 赤系
     for &id in &state.used {
         // JIS X 0402 コード（例：13101）で指定
         css.push_str(&format!(
-            "{}[data-code=\"{}\"] {{ fill: rgba(30, 30, 55, 0.9) !important; stroke: rgba(0, 245, 255, 0.12) !important; }}\n",
+            "{}[data-code=\"{}\"] {{ fill: rgba(120, 60, 80, 0.7) !important; stroke: rgba(0, 245, 255, 0.26) !important; }}\n",
             base_selector, id.0
         ));
     }

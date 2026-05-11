@@ -239,7 +239,7 @@ pub fn GameScreen(state: GameState, mode: GameMode, on_update: EventHandler<Game
 
                 // 使用済み帯
                 div { class: "panel-used-strip",
-                    span { class: "gc-label", style: "white-space: nowrap;", "使用済み" }
+                    span { class: "gc-label", style: "white-space: nowrap;", "経路" }
                     span { class: "panel-used-list",
                         "{used_names(&state, db(mode))}"
                     }
