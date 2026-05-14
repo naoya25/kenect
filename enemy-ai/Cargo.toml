@@ -1,0 +1,11 @@
+[package]
+name = "enemy-ai"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+name = "enemy_ai"
+path = "src/lib.rs"
+
+[dependencies]
+shared = { path = "../packages/shared" }
