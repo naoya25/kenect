@@ -2,7 +2,7 @@
 members = [
     "apps/frontend",
     "apps/backend",
-    "enemy-ai",
+    "packages/enemy-ai",
     "packages/shared",
 ]
 resolver = "2"

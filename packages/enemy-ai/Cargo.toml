@@ -8,4 +8,4 @@ name = "enemy_ai"
 path = "src/lib.rs"
 
 [dependencies]
-shared = { path = "../packages/shared" }
+shared = { path = "../shared" }
