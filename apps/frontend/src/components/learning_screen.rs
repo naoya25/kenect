@@ -1,7 +1,7 @@
 use dioxus::prelude::*;
 use dioxus_web::WebEventExt;
-use std::collections::HashMap;
 use shared::location::LocationId;
+use std::collections::HashMap;
 use wasm_bindgen::JsCast;
 
 use crate::app::{GameMode, db};
