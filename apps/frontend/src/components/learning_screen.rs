@@ -108,11 +108,11 @@ pub fn LearningScreen(mode: GameMode) -> Element {
                                 let Some((x1, y1)) = values.next().copied() else { return; };
                                 let Some((x2, y2)) = values.next().copied() else { return; };
                                 let distance = ((x2 - x1).powi(2) + (y2 - y1).powi(2)).sqrt();
-                                if let Some(start_distance) = pinch_start_distance() {
-                                    if start_distance > 0.0 {
-                                        let next = pinch_start_zoom() * (distance / start_distance);
-                                        zoom.set(next.clamp(1.0, 4.0));
-                                    }
+                                if let Some(start_distance) = pinch_start_distance()
+                                    && start_distance > 0.0
+                                {
+                                    let next = pinch_start_zoom() * (distance / start_distance);
+                                    zoom.set(next.clamp(1.0, 4.0));
                                 }
                             } else {
                                 pinch_start_distance.set(None);
