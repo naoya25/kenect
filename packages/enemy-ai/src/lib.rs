@@ -133,9 +133,9 @@ impl RemainingGraph {
     fn matching_size_without(&self, removed: usize) -> usize {
         let mut old_to_new = vec![None; self.ids.len()];
         let mut next = 0;
-        for index in 0..self.ids.len() {
+        for (index, slot) in old_to_new.iter_mut().enumerate() {
             if index != removed {
-                old_to_new[index] = Some(next);
+                *slot = Some(next);
                 next += 1;
             }
         }
@@ -271,11 +271,11 @@ impl Blossom {
         loop {
             a = self.base[a];
             used_path[a] = true;
-            if let Some(matched) = self.matching[a] {
-                if let Some(parent) = self.parent[matched] {
-                    a = parent;
-                    continue;
-                }
+            if let Some(matched) = self.matching[a]
+                && let Some(parent) = self.parent[matched]
+            {
+                a = parent;
+                continue;
             }
             break;
         }
