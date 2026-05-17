@@ -31,7 +31,7 @@ pub fn find_longest_path(graph: &[Region], start: &Region) -> Vec<LocationId> {
         .unwrap_or(42);
     let mut rng = Rng::new(seed ^ 0xcafe_babe_dead_beef);
 
-    // 初期解: ランダム延伸
+    // 初期解: ランダム延伸 + Posa rotation
     let mut visited = vec![false; max_id + 1];
     visited[start.id.0 as usize] = true;
     let mut path = vec![start.id];
@@ -67,7 +67,7 @@ pub fn find_longest_path(graph: &[Region], start: &Region) -> Vec<LocationId> {
             visited[id.0 as usize] = false;
         }
 
-        // ランダムに再延伸
+        // ランダムに再延伸 + Posa rotation
         extend_randomly(&id_map, &mut path, &mut visited, max_id, &mut rng);
 
         // 受理判定
@@ -103,29 +103,107 @@ fn extend_randomly(
     rng: &mut Rng,
 ) {
     while let Some(&current) = path.last() {
-        let nbs: Vec<LocationId> = id_map
-            .get(current.0 as usize)
-            .and_then(|r| *r)
-            .map(|r| {
-                r.neighbors
-                    .iter()
-                    .filter(|&&nb| {
-                        let i = nb.0 as usize;
-                        i <= max_id && !visited[i] && id_map[i].is_some()
-                    })
-                    .copied()
-                    .collect()
-            })
-            .unwrap_or_default();
+        let nbs = unvisited_neighbors(id_map, current, visited, max_id);
 
         if nbs.is_empty() {
-            break;
+            if !try_posa_rotation(id_map, path, visited, max_id, rng) {
+                break;
+            }
+            continue;
         }
 
         let nb = nbs[rng.next_usize(nbs.len())];
         visited[nb.0 as usize] = true;
         path.push(nb);
     }
+}
+
+fn unvisited_neighbors(
+    id_map: &[Option<&Region>],
+    current: LocationId,
+    visited: &[bool],
+    max_id: usize,
+) -> Vec<LocationId> {
+    id_map
+        .get(current.0 as usize)
+        .and_then(|r| *r)
+        .map(|r| {
+            r.neighbors
+                .iter()
+                .filter(|&&nb| {
+                    let i = nb.0 as usize;
+                    i <= max_id && !visited[i] && id_map[i].is_some()
+                })
+                .copied()
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+fn has_unvisited_neighbor(
+    id_map: &[Option<&Region>],
+    current: LocationId,
+    visited: &[bool],
+    max_id: usize,
+) -> bool {
+    id_map
+        .get(current.0 as usize)
+        .and_then(|r| *r)
+        .map(|r| {
+            r.neighbors.iter().any(|&nb| {
+                let i = nb.0 as usize;
+                i <= max_id && !visited[i] && id_map[i].is_some()
+            })
+        })
+        .unwrap_or(false)
+}
+
+fn try_posa_rotation(
+    id_map: &[Option<&Region>],
+    path: &mut [LocationId],
+    visited: &[bool],
+    max_id: usize,
+    rng: &mut Rng,
+) -> bool {
+    if path.len() < 3 {
+        return false;
+    }
+
+    let end = *path.last().unwrap();
+    let end_region = match id_map.get(end.0 as usize).and_then(|r| *r) {
+        Some(region) => region,
+        None => return false,
+    };
+
+    let mut path_index = vec![None; max_id + 1];
+    for (i, &id) in path.iter().enumerate() {
+        path_index[id.0 as usize] = Some(i);
+    }
+
+    let mut candidates = Vec::new();
+
+    for &neighbor in end_region.neighbors {
+        let i = match path_index.get(neighbor.0 as usize).and_then(|index| *index) {
+            Some(i) if i + 1 < path.len() => i,
+            _ => continue,
+        };
+
+        let new_end = path[i + 1];
+        if has_unvisited_neighbor(id_map, new_end, visited, max_id) {
+            candidates.push(i);
+        }
+    }
+
+    if candidates.is_empty() {
+        return false;
+    }
+
+    let rotation_index = candidates[rng.next_usize(candidates.len())];
+
+    // v0 ... vi, v(i+1) ... vk から
+    // v0 ... vi, vk ... v(i+1) へ並べ替える。訪問済み集合は変わらない。
+    path[rotation_index + 1..].reverse();
+    true
 }
 
 #[cfg(test)]
