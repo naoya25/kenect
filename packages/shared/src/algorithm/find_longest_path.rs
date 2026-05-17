@@ -158,14 +158,6 @@ fn has_unvisited_neighbor(
         .unwrap_or(false)
 }
 
-fn is_adjacent(id_map: &[Option<&Region>], a: LocationId, b: LocationId) -> bool {
-    id_map
-        .get(a.0 as usize)
-        .and_then(|r| *r)
-        .map(|r| r.neighbors.contains(&b))
-        .unwrap_or(false)
-}
-
 fn try_posa_rotation(
     id_map: &[Option<&Region>],
     path: &mut [LocationId],
@@ -178,13 +170,26 @@ fn try_posa_rotation(
     }
 
     let end = *path.last().unwrap();
+    let end_region = match id_map.get(end.0 as usize).and_then(|r| *r) {
+        Some(region) => region,
+        None => return false,
+    };
+
+    let mut path_index = vec![None; max_id + 1];
+    for (i, &id) in path.iter().enumerate() {
+        path_index[id.0 as usize] = Some(i);
+    }
+
     let mut candidates = Vec::new();
 
-    for i in 0..path.len() - 1 {
+    for &neighbor in end_region.neighbors {
+        let i = match path_index.get(neighbor.0 as usize).and_then(|index| *index) {
+            Some(i) if i + 1 < path.len() => i,
+            _ => continue,
+        };
+
         let new_end = path[i + 1];
-        if is_adjacent(id_map, end, path[i])
-            && has_unvisited_neighbor(id_map, new_end, visited, max_id)
-        {
+        if has_unvisited_neighbor(id_map, new_end, visited, max_id) {
             candidates.push(i);
         }
     }
