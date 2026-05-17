@@ -1153,13 +1153,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "enemy-ai"
-version = "0.1.0"
-dependencies = [
- "shared",
-]
-
-[[package]]
 name = "enumset"
 version = "1.1.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"

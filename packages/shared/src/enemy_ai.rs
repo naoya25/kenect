@@ -1,21 +1,40 @@
-use std::collections::{HashMap, HashSet, VecDeque};
+//! Undirected Vertex Geography の最適手を選ぶ CPU。
+//!
+//! 現在地を含む「未使用頂点 + 現在地」の残りグラフ `G` を考えます。
+//! `nu(G)` を `G` の最大マッチングサイズとすると、現在地 `current` がすべての
+//! 最大マッチングでマッチされる条件は `nu(G) > nu(G - current)` です。
+//!
+//! この条件が成り立つ局面は現在手番の勝ち局面です。その場合、現在地の最大マッチング上の
+//! 相手へ動くことで、相手に負け局面を渡せます。条件が成り立たない負け局面では、
+//! この CPU は合法手からランダムに選びます。
+
+use std::collections::{HashMap, HashSet};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use shared::game::{GamePhase, GameState};
-use shared::location::{LocationId, RegionDatabase};
+use crate::algorithm::blossom::{matching_size, maximum_matching};
+use crate::game::{GamePhase, GameState};
+use crate::location::{LocationId, RegionDatabase};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PositionKind {
+    /// 現在手番が勝ち局面で、CPU は最適手を選んだ。
     Winning,
+    /// 現在手番が負け局面で、CPU は合法手からランダムに選んだ。
     Losing,
 }
 
+/// CPU が選んだ手と、その手を選ぶ前の局面の勝敗種別。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct CpuMove {
+    /// 宣言する移動先。
     pub location: LocationId,
+    /// 手を選ぶ前の局面が勝ち局面か負け局面か。
     pub position: PositionKind,
 }
 
+/// Undirected Vertex Geography の最適 CPU。
+///
+/// 勝ち局面では最大マッチングに基づく最適手を返し、負け局面では合法手から乱択します。
 #[derive(Debug, Clone)]
 pub struct EnemyAi {
     rng: XorShift64,
@@ -28,6 +47,7 @@ impl Default for EnemyAi {
 }
 
 impl EnemyAi {
+    /// 現在時刻を seed にした CPU を作る。
     pub fn new() -> Self {
         let seed = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -36,13 +56,19 @@ impl EnemyAi {
         Self::with_seed(seed)
     }
 
+    /// 指定した seed で CPU を作る。
+    ///
+    /// テストや再現性が必要な場面ではこちらを使います。
     pub fn with_seed(seed: u64) -> Self {
         Self {
             rng: XorShift64::new(seed),
         }
     }
 
-    /// Returns an optimal move in winning positions and a random legal move in losing positions.
+    /// 現在の盤面に対して CPU の手を 1 つ選ぶ。
+    ///
+    /// `state.phase` が `Playing` でない場合、または合法手がない場合は `None` を返します。
+    /// 勝ち局面なら相手に負け局面を渡す最適手を返し、負け局面なら合法手からランダムに返します。
     pub fn choose_move(&mut self, state: &GameState, db: &RegionDatabase) -> Option<CpuMove> {
         if state.phase != GamePhase::Playing {
             return None;
@@ -68,6 +94,10 @@ impl EnemyAi {
     }
 }
 
+/// 現在手番のプレイヤーにとって勝ち局面かどうかを返す。
+///
+/// 判定は `nu(G) > nu(G - current)` で行います。ここで `G` は現在地を含む残りグラフ、
+/// `nu` は最大マッチングサイズです。
 pub fn is_winning_position(state: &GameState, db: &RegionDatabase) -> bool {
     if state.phase != GamePhase::Playing {
         return false;
@@ -77,6 +107,10 @@ pub fn is_winning_position(state: &GameState, db: &RegionDatabase) -> bool {
     graph.is_forced_matched(state.current)
 }
 
+/// 勝ち局面なら、相手に負け局面を渡す移動先を返す。
+///
+/// 返す手は現在地の最大マッチング上の相手です。負け局面、ゲーム終了後、または合法手がない
+/// 局面では `None` を返します。
 pub fn optimal_move(state: &GameState, db: &RegionDatabase) -> Option<LocationId> {
     if state.phase != GamePhase::Playing {
         return None;
@@ -88,12 +122,19 @@ pub fn optimal_move(state: &GameState, db: &RegionDatabase) -> Option<LocationId
 
 #[derive(Debug, Clone)]
 struct RemainingGraph {
+    /// Blossom 用の頂点 index から元の `LocationId` への対応。
     ids: Vec<LocationId>,
+    /// 元の `LocationId` から Blossom 用の頂点 index への対応。
     index_by_id: HashMap<LocationId, usize>,
+    /// 現在地を含む残りグラフの隣接リスト。
     adjacency: Vec<Vec<usize>>,
 }
 
 impl RemainingGraph {
+    /// `GameState` と `RegionDatabase` から、最大マッチング用の `usize` グラフを作る。
+    ///
+    /// `state.current` は `state.used` に含まれますが、現在地としてグラフに残します。
+    /// それ以外の使用済み頂点は除外します。
     fn from_state(state: &GameState, db: &RegionDatabase) -> Self {
         let used: HashSet<LocationId> = state.used.iter().copied().collect();
         let ids: Vec<LocationId> = db
@@ -126,10 +167,12 @@ impl RemainingGraph {
         }
     }
 
+    /// 残りグラフ `G` の最大マッチングを返す。
     fn matching(&self) -> Vec<Option<usize>> {
-        Blossom::new(self.adjacency.clone()).maximum_matching()
+        maximum_matching(self.adjacency.clone())
     }
 
+    /// 指定した頂点 index を取り除いたグラフの最大マッチングサイズを返す。
     fn matching_size_without(&self, removed: usize) -> usize {
         let mut old_to_new = vec![None; self.ids.len()];
         let mut next = 0;
@@ -152,9 +195,12 @@ impl RemainingGraph {
             }
         }
 
-        matching_size(&Blossom::new(adjacency).maximum_matching())
+        matching_size(&maximum_matching(adjacency))
     }
 
+    /// `id` がすべての最大マッチングでマッチされるかどうかを返す。
+    ///
+    /// `nu(G) > nu(G - id)` なら、`id` を未マッチにした最大マッチングは存在しません。
     fn is_forced_matched(&self, id: LocationId) -> bool {
         let Some(&index) = self.index_by_id.get(&id) else {
             return false;
@@ -164,6 +210,9 @@ impl RemainingGraph {
         size > self.matching_size_without(index)
     }
 
+    /// `id` が強制的にマッチされる場合、その最大マッチング上の相手を返す。
+    ///
+    /// Undirected Vertex Geography では、この相手へ動くことが勝ち局面での最適手になります。
     fn forced_matching_partner(&self, id: LocationId) -> Option<LocationId> {
         if !self.is_forced_matched(id) {
             return None;
@@ -173,145 +222,6 @@ impl RemainingGraph {
         self.matching()
             .get(index)
             .and_then(|partner| partner.map(|partner| self.ids[partner]))
-    }
-}
-
-fn matching_size(matching: &[Option<usize>]) -> usize {
-    matching.iter().filter(|partner| partner.is_some()).count() / 2
-}
-
-#[derive(Debug, Clone)]
-struct Blossom {
-    adjacency: Vec<Vec<usize>>,
-    matching: Vec<Option<usize>>,
-    parent: Vec<Option<usize>>,
-    base: Vec<usize>,
-    used: Vec<bool>,
-    blossom: Vec<bool>,
-    queue: VecDeque<usize>,
-}
-
-impl Blossom {
-    fn new(adjacency: Vec<Vec<usize>>) -> Self {
-        let n = adjacency.len();
-        Self {
-            adjacency,
-            matching: vec![None; n],
-            parent: vec![None; n],
-            base: (0..n).collect(),
-            used: vec![false; n],
-            blossom: vec![false; n],
-            queue: VecDeque::new(),
-        }
-    }
-
-    fn maximum_matching(mut self) -> Vec<Option<usize>> {
-        for root in 0..self.adjacency.len() {
-            if self.matching[root].is_none() {
-                self.find_path(root);
-            }
-        }
-        self.matching
-    }
-
-    fn find_path(&mut self, root: usize) -> Option<usize> {
-        self.used.fill(false);
-        self.parent.fill(None);
-        for (index, base) in self.base.iter_mut().enumerate() {
-            *base = index;
-        }
-
-        self.queue.clear();
-        self.queue.push_back(root);
-        self.used[root] = true;
-
-        while let Some(vertex) = self.queue.pop_front() {
-            let neighbors = self.adjacency[vertex].clone();
-            for to in neighbors {
-                if self.base[vertex] == self.base[to] || self.matching[vertex] == Some(to) {
-                    continue;
-                }
-
-                if to == root
-                    || self.matching[to]
-                        .and_then(|matched| self.parent[matched])
-                        .is_some()
-                {
-                    let current_base = self.lca(vertex, to);
-                    self.blossom.fill(false);
-                    self.mark_path(vertex, current_base, to);
-                    self.mark_path(to, current_base, vertex);
-                    for index in 0..self.adjacency.len() {
-                        if self.blossom[self.base[index]] {
-                            self.base[index] = current_base;
-                            if !self.used[index] {
-                                self.used[index] = true;
-                                self.queue.push_back(index);
-                            }
-                        }
-                    }
-                } else if self.parent[to].is_none() {
-                    self.parent[to] = Some(vertex);
-                    if let Some(matched) = self.matching[to] {
-                        self.used[matched] = true;
-                        self.queue.push_back(matched);
-                    } else {
-                        self.augment(to);
-                        return Some(to);
-                    }
-                }
-            }
-        }
-
-        None
-    }
-
-    fn lca(&self, mut a: usize, mut b: usize) -> usize {
-        let mut used_path = vec![false; self.adjacency.len()];
-        loop {
-            a = self.base[a];
-            used_path[a] = true;
-            if let Some(matched) = self.matching[a]
-                && let Some(parent) = self.parent[matched]
-            {
-                a = parent;
-                continue;
-            }
-            break;
-        }
-
-        loop {
-            b = self.base[b];
-            if used_path[b] {
-                return b;
-            }
-            let matched = self.matching[b].expect("LCA requires an alternating path");
-            b = self.parent[matched].expect("LCA requires parent links");
-        }
-    }
-
-    fn mark_path(&mut self, mut vertex: usize, base: usize, mut child: usize) {
-        while self.base[vertex] != base {
-            self.blossom[self.base[vertex]] = true;
-            let matched = self.matching[vertex].expect("blossom path vertex must be matched");
-            self.blossom[self.base[matched]] = true;
-            self.parent[vertex] = Some(child);
-            child = matched;
-            vertex = self.parent[matched].expect("matched vertex must have a parent");
-        }
-    }
-
-    fn augment(&mut self, mut vertex: usize) {
-        while let Some(previous) = self.parent[vertex] {
-            let next = self.matching[previous];
-            self.matching[vertex] = Some(previous);
-            self.matching[previous] = Some(vertex);
-            if let Some(next) = next {
-                vertex = next;
-            } else {
-                break;
-            }
-        }
     }
 }
 
@@ -339,8 +249,8 @@ impl XorShift64 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use shared::data::PREFECTURE_DB;
-    use shared::location::{Region, RegionKind};
+    use crate::data::PREFECTURE_DB;
+    use crate::location::{Region, RegionKind};
 
     static PATH3: &[Region] = &[
         Region {
@@ -403,40 +313,6 @@ mod tests {
     ];
 
     #[test]
-    fn blossom_matches_odd_cycle() {
-        let graph = vec![vec![1, 2], vec![0, 2], vec![0, 1]];
-        let matching = Blossom::new(graph).maximum_matching();
-        assert_eq!(matching_size(&matching), 1);
-    }
-
-    #[test]
-    fn blossom_matches_bruteforce_for_all_graphs_up_to_six_vertices() {
-        for n in 0..=6 {
-            let edge_count = if n == 0 { 0 } else { n * (n - 1) / 2 };
-            for mask in 0..(1usize << edge_count) {
-                let mut adjacency = vec![Vec::new(); n];
-                let mut bit = 0;
-                for a in 0..n {
-                    for b in (a + 1)..n {
-                        if (mask & (1 << bit)) != 0 {
-                            adjacency[a].push(b);
-                            adjacency[b].push(a);
-                        }
-                        bit += 1;
-                    }
-                }
-
-                let matching = Blossom::new(adjacency.clone()).maximum_matching();
-                assert_eq!(
-                    matching_size(&matching),
-                    brute_force_matching_size(&adjacency),
-                    "n={n}, mask={mask}"
-                );
-            }
-        }
-    }
-
-    #[test]
     fn path_endpoint_is_losing() {
         let db = RegionDatabase::new(PATH3);
         let state = GameState::new(LocationId(1), vec!["cpu".into()], &db);
@@ -485,33 +361,5 @@ mod tests {
         let chosen = ai.choose_move(&state, &PREFECTURE_DB).unwrap();
         assert!(PREFECTURE_DB.is_adjacent(state.current, chosen.location));
         assert!(!state.used.contains(&chosen.location));
-    }
-
-    fn brute_force_matching_size(adjacency: &[Vec<usize>]) -> usize {
-        let Some(first) = (0..adjacency.len()).find(|&index| !adjacency[index].is_empty()) else {
-            return 0;
-        };
-
-        let mut without_first = adjacency.to_vec();
-        for neighbors in &mut without_first {
-            neighbors.retain(|&to| to != first);
-        }
-        without_first[first].clear();
-        let mut best = brute_force_matching_size(&without_first);
-
-        for &partner in &adjacency[first] {
-            if partner < first {
-                continue;
-            }
-            let mut rest = adjacency.to_vec();
-            for neighbors in &mut rest {
-                neighbors.retain(|&to| to != first && to != partner);
-            }
-            rest[first].clear();
-            rest[partner].clear();
-            best = best.max(1 + brute_force_matching_size(&rest));
-        }
-
-        best
     }
 }
