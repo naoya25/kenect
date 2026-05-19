@@ -79,7 +79,9 @@ impl EnemyAi {
             return None;
         }
 
-        if let Some(location) = optimal_move(state, db) {
+        if let Some(location) = optimal_move(state, db)
+            && valid_moves.contains(&location)
+        {
             Some(CpuMove {
                 location,
                 position: PositionKind::Winning,
